@@ -2,6 +2,7 @@ import sys
 
 from cupy.core import ndarray
 from cupyx.scipy.sparse.base import spmatrix
+from cupyx.scipy import fftpack
 
 
 try:
