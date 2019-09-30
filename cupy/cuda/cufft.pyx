@@ -59,9 +59,9 @@ cdef extern from 'cupy_cufft.h' nogil:
     Result cufftExecZ2D(Handle plan, DoubleComplex *idata, Double *odata)
 
     # cuFFT Callback Function
-    Result cufftXtSetCallback(Handle plan, void** callbackRoutine,
-                              CallbackType type, void** callerInfo)
-    Result cufftXtClearCallback(Handle plan, CallbackType type)
+    Result setCallback(Handle plan, void** callbackRoutine, CallbackType type,
+                       void** callerInfo)
+    Result clearCallback(Handle plan, CallbackType type)
 
 
 cdef dict RESULT = {
@@ -323,8 +323,8 @@ class PlanNd(object):
         cI.push_back(<void*>callerInfo)
 
         with nogil:
-            result = cufftXtSetCallback(plan, <void**>&(cb[0]),
-                                        <CallbackType>type, <void**>&(cI[0]))
+            result = setCallback(plan, <void**>&(cb[0]), <CallbackType>type,
+                                 <void**>&(cI[0]))
         check_result(result)
 
 #    def unset_callback(self):

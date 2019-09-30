@@ -7,6 +7,12 @@
 #include <cufft.h>
 #include <cufftXt.h>
 
+cufftResult setCallback(cufftHandle plan, void **callbackRoutine,
+                        cufftXtCallbackType type, void **callerInfo);
+
+cufftResult clearCallback(cufftHandle plan, cufftXtCallbackType type);
+
+
 #else  // CUPY_NO_CUDA
 extern "C" {
 

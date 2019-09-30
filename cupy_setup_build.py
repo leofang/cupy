@@ -49,7 +49,6 @@ MODULES = [
             'cupy.core.fusion',
             'cupy.core.raw',
             'cupy.cuda.cublas',
-            'cupy.cuda.cufft',
             'cupy.cuda.curand',
             'cupy.cuda.cusparse',
             'cupy.cuda.device',
@@ -70,7 +69,6 @@ MODULES = [
             'cuda.h',
             'cuda_profiler_api.h',
             'cuda_runtime.h',
-            'cufft.h',
             'curand.h',
             'cusparse.h',
             'nvrtc.h',
@@ -79,7 +77,6 @@ MODULES = [
             'cublas',
             'cuda',
             'cudart',
-            'cufft',
             'curand',
             'cusparse',
             'nvrtc',
@@ -194,6 +191,21 @@ MODULES = [
         ],
         'check_method': build.check_cuda_version,
     },
+    {
+        'name': 'cufft',
+        'file': [
+            ('cupy.cuda.cufft', ['cupy/cuda/cupy_cufft.cu']),
+        ],
+        'include': [
+            'cufft.h',
+        ],
+        'libraries': [
+            'cuda',
+            'cudart',
+        ],
+        'check_method': build.check_cuda_version,
+        'version_method': build.get_cuda_version,
+    },
 ]
 
 
@@ -300,6 +312,18 @@ def preconfigure_modules(compiler, settings):
         print('-------- Configuring Module: {} --------'.format(
             module['name']))
         sys.stdout.flush()
+
+        # check if we want to link to cuFFT dynamically (default) or statically
+        if module['name'] == 'cufft':
+            static_linking = os.environ.get('CUPY_CUFFT_STATIC', False)
+            if static_linking:
+                module['include'].append('cufftXt.h')
+                module['libraries'].append('cufft_static')
+                module['libraries'].append('culibos')
+                module['libraries'].append('cudadevrt')
+            else:
+                module['libraries'].append('cufft')
+
         if not check_library(compiler,
                              includes=module['include'],
                              include_dirs=settings['include_dirs'],
@@ -443,6 +467,12 @@ def make_extensions(options, compiler, use_cython):
                 link_args.append('-fopenmp')
             elif compiler.compiler_type == 'msvc':
                 compile_args.append('/openmp')
+
+#        if module['name'] == 'cufft':
+#            link_args = s.setdefault('extra_link_args', [])
+#            if compiler.compiler_type == 'unix' and not PLATFORM_DARWIN:
+#                #link_args.append('-lcupy_cufft_rdc')
+#                pass
 
         original_s = s
         for f in module['file']:
@@ -749,20 +779,62 @@ class _UnixCCompiler(unixccompiler.UnixCCompiler):
 
         # For CUDA C source files, compile them with NVCC.
         _compiler_so = self.compiler_so
+        _linker_exe = self.linker_exe
         try:
             nvcc_path = build.get_nvcc_path()
             base_opts = build.get_compiler_base_options()
             self.set_executable('compiler_so', nvcc_path)
+            self.set_executable('linker_exe', nvcc_path)
 
             cuda_version = build.get_cuda_version()
             postargs = _nvcc_gencode_options(cuda_version) + [
                 '-O2', '--compiler-options="-fPIC"', '--std=c++11']
-            print('NVCC options:', postargs)
 
-            return unixccompiler.UnixCCompiler._compile(
-                self, obj, src, ext, base_opts + cc_args, postargs, pp_opts)
+            filename = os.path.split(src)[1]
+            # for relocatable code
+            target_filename = ['cupy_cufft.cu', ]
+
+            if filename not in target_filename:
+                print('NVCC options:', postargs)
+                return unixccompiler.UnixCCompiler._compile(
+                    self, obj, src, ext, base_opts + cc_args, postargs, pp_opts)
+            else:
+                print("******************* MOM I AM HERE *******************")
+                base_filename = filename[:-3]
+                build_path = os.path.split(obj)[0]
+                del postargs[-2]
+                print('NVCC options:', postargs)
+#                postargs1 = postargs + ['-dc'] #, '-o', base_filename + '.o']
+#                print('1 - NVCC options:', postargs1)
+                print("STEP 1")
+                unixccompiler.UnixCCompiler._compile(
+                    self, obj, src, ext, base_opts + cc_args + ['-dc'], postargs, pp_opts)
+
+                print("+++++++++++", build_path, "+++++++++++")
+
+#                postargs2 = postargs + ['-dlink', obj] #, '--output-file', base_filename + '.link.o']
+#                print('2 - NVCC options:', postargs)
+                print("STEP 2")
+                obj_dev = build_path+'/'+base_filename+'.link.o' 
+                unixccompiler.UnixCCompiler.link(self, self.EXECUTABLE, [obj,], obj_dev, 
+                                                 extra_preargs=['-dlink',], extra_postargs=postargs)
+#                unixccompiler.UnixCCompiler._compile(
+#                    self, obj, None, ext, base_opts + cc_args, postargs2, pp_opts)
+
+#                postargs3 = postargs + ['-lib', '-o', base_filename + '.a']
+#                print('3 - NVCC options:', postargs)
+                print("STEP 3")
+                obj_final = build_path+'/lib'+base_filename+'_rdc.a'
+                unixccompiler.UnixCCompiler.link(self, self.EXECUTABLE, [obj, obj_dev], obj_final,
+                                                 extra_preargs=['-lib',])#, extra_postargs=postargs)
+
+                os.remove(obj)
+                os.remove(obj_dev)
+                os.rename(obj_final, obj)
+                print("******************* MOM I AM DONE *******************")
         finally:
             self.compiler_so = _compiler_so
+            self.linker_exe = _linker_exe
 
 
 class _MSVCCompiler(msvccompiler.MSVCCompiler):

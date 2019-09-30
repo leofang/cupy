@@ -53,6 +53,9 @@ cdef class RawKernel:
         """
         self.kernel(grid, block, args, **kwargs)
 
+    def __int__(self):
+        return self.kernel.ptr
+
     @property
     def kernel(self):
         if self._kernel is None:
