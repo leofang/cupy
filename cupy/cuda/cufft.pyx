@@ -1,5 +1,6 @@
 cimport cython  # NOQA
 from libc.stdint cimport intptr_t
+from libcpp cimport vector
 import numpy
 import threading
 
@@ -56,6 +57,11 @@ cdef extern from 'cupy_cufft.h' nogil:
                         DoubleComplex *odata, int direction)
     Result cufftExecD2Z(Handle plan, Double *idata, DoubleComplex *odata)
     Result cufftExecZ2D(Handle plan, DoubleComplex *idata, Double *odata)
+
+    # cuFFT Callback Function
+    Result cufftXtSetCallback(Handle plan, void** callbackRoutine,
+                              CallbackType type, void** callerInfo)
+    Result cufftXtClearCallback(Handle plan, CallbackType type)
 
 
 cdef dict RESULT = {
@@ -308,6 +314,21 @@ class PlanNd(object):
             raise ValueError('output contiguity mismatch')
         if out.shape != a.shape:
             raise ValueError('output shape mismatch')
+
+    def set_callback(self, intptr_t callbackRoutine, int type,
+                     intptr_t callerInfo=0):
+        cdef Handle plan = self.plan
+        cdef vector.vector[void*] cb, cI
+        cb.push_back(<void*>callbackRoutine)
+        cI.push_back(<void*>callerInfo)
+
+        with nogil:
+            result = cufftXtSetCallback(plan, <void**>&(cb[0]),
+                                        <CallbackType>type, <void**>&(cI[0]))
+        check_result(result)
+
+#    def unset_callback(self):
+#        pass
 
 
 cpdef execC2C(Handle plan, intptr_t idata, intptr_t odata, int direction):

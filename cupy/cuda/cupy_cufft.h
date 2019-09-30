@@ -4,7 +4,8 @@
 #define INCLUDE_GUARD_CUPY_CUFFT_H
 
 #ifndef CUPY_NO_CUDA
-#  include <cufft.h>
+#include <cufft.h>
+#include <cufftXt.h>
 
 #else  // CUPY_NO_CUDA
 extern "C" {
