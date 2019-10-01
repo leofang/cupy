@@ -7,11 +7,22 @@
 #include <cufft.h>
 #include <cufftXt.h>
 
+#ifdef CUPY_CUFFT_STATIC
 cufftResult setCallback(cufftHandle plan, void **callbackRoutine,
                         cufftXtCallbackType type, void **callerInfo);
 
 cufftResult clearCallback(cufftHandle plan, cufftXtCallbackType type);
+#else
+#define CUPY_CUFFT_STATIC 0
+cufftResult setCallback(cufftHandle plan, void **callbackRoutine,
+                        cufftXtCallbackType type, void **callerInfo){
+    return CUFFT_SUCCESS;
+}
 
+cufftResult clearCallback(cufftHandle plan, cufftXtCallbackType type){
+    return CUFFT_SUCCESS;
+}
+#endif // CUPY_CUFFT_STATIC
 
 #else  // CUPY_NO_CUDA
 extern "C" {

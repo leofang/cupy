@@ -194,7 +194,7 @@ MODULES = [
     {
         'name': 'cufft',
         'file': [
-            ('cupy.cuda.cufft', ['cupy/cuda/cupy_cufft.cu']),
+            ('cupy.cuda.cufft', ['cupy/cuda/cupy_cufft.cpp']),
         ],
         'include': [
             'cufft.h',
@@ -315,7 +315,7 @@ def preconfigure_modules(compiler, settings):
 
         # check if we want to link to cuFFT dynamically (default) or statically
         if module['name'] == 'cufft':
-            static_linking = os.environ.get('CUPY_CUFFT_STATIC', False)
+            static_linking = int(os.environ.get('CUPY_CUFFT_STATIC', "0"))
             if static_linking:
                 module['include'].append('cufftXt.h')
                 module['libraries'].append('cufft_static')
@@ -468,7 +468,11 @@ def make_extensions(options, compiler, use_cython):
             elif compiler.compiler_type == 'msvc':
                 compile_args.append('/openmp')
 
-#        if module['name'] == 'cufft':
+        if module['name'] == 'cufft':
+            # propagate the env var CUPY_CUFFT_STATIC to the compiler
+            static_linking = int(os.environ.get('CUPY_CUFFT_STATIC', "0"))
+            if static_linking:
+                s['define_macros'].append(('CUPY_CUFFT_STATIC', '1'))
 #            link_args = s.setdefault('extra_link_args', [])
 #            if compiler.compiler_type == 'unix' and not PLATFORM_DARWIN:
 #                #link_args.append('-lcupy_cufft_rdc')

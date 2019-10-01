@@ -59,6 +59,7 @@ cdef extern from 'cupy_cufft.h' nogil:
     Result cufftExecZ2D(Handle plan, DoubleComplex *idata, Double *odata)
 
     # cuFFT Callback Function
+    int CUPY_CUFFT_STATIC
     Result setCallback(Handle plan, void** callbackRoutine, CallbackType type,
                        void** callerInfo)
     Result clearCallback(Handle plan, CallbackType type)
@@ -319,13 +320,16 @@ class PlanNd(object):
                      intptr_t callerInfo=0):
         cdef Handle plan = self.plan
         cdef vector.vector[void*] cb, cI
-        cb.push_back(<void*>callbackRoutine)
-        cI.push_back(<void*>callerInfo)
-
-        with nogil:
-            result = setCallback(plan, <void**>&(cb[0]), <CallbackType>type,
-                                 <void**>&(cI[0]))
-        check_result(result)
+        if not CUPY_CUFFT_STATIC:
+            raise Exception
+        else:
+            cb.push_back(<void*>callbackRoutine)
+            cI.push_back(<void*>callerInfo)
+    
+            with nogil:
+                result = setCallback(plan, <void**>&(cb[0]), <CallbackType>type,
+                                     <void**>&(cI[0]))
+            check_result(result)
 
 #    def unset_callback(self):
 #        pass

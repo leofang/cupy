@@ -1,3 +1,4 @@
+#ifdef CUPY_CUFFT_STATIC
 #include "cupy_cufft.h"
 
 
@@ -12,3 +13,5 @@ cufftResult clearCallback(cufftHandle plan, cufftXtCallbackType type)
 {
     return cufftXtClearCallback(plan, type);
 }
+
+#endif
