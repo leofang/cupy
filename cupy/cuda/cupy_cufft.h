@@ -5,23 +5,20 @@
 
 #ifndef CUPY_NO_CUDA
 #include <cufft.h>
-#include <cufftXt.h>
 
-#ifdef CUPY_CUFFT_STATIC
-cufftResult setCallback(cufftHandle plan, void **callbackRoutine,
-                        cufftXtCallbackType type, void **callerInfo);
-
-cufftResult clearCallback(cufftHandle plan, cufftXtCallbackType type);
-#else
+#ifndef CUPY_CUFFT_STATIC
 #define CUPY_CUFFT_STATIC 0
-cufftResult setCallback(cufftHandle plan, void **callbackRoutine,
-                        cufftXtCallbackType type, void **callerInfo){
+typedef enum {} cufftXtCallbackType;
+
+cufftResult cufftXtSetCallback(...){
     return CUFFT_SUCCESS;
 }
 
-cufftResult clearCallback(cufftHandle plan, cufftXtCallbackType type){
+cufftResult cufftXtClearCallback(...){
     return CUFFT_SUCCESS;
 }
+#else
+#include <cufftXt.h>
 #endif // CUPY_CUFFT_STATIC
 
 #else  // CUPY_NO_CUDA

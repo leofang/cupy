@@ -60,9 +60,9 @@ cdef extern from 'cupy_cufft.h' nogil:
 
     # cuFFT Callback Function
     int CUPY_CUFFT_STATIC
-    Result setCallback(Handle plan, void** callbackRoutine, CallbackType type,
+    Result cufftXtSetCallback(Handle plan, void** callbackRoutine, CallbackType type,
                        void** callerInfo)
-    Result clearCallback(Handle plan, CallbackType type)
+    Result cufftXtClearCallback(Handle plan, CallbackType type)
 
 
 cdef dict RESULT = {
@@ -327,7 +327,7 @@ class PlanNd(object):
             cI.push_back(<void*>callerInfo)
     
             with nogil:
-                result = setCallback(plan, <void**>&(cb[0]), <CallbackType>type,
+                result = cufftXtSetCallback(plan, <void**>&(cb[0]), <CallbackType>type,
                                      <void**>&(cI[0]))
             check_result(result)
 

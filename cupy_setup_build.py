@@ -194,7 +194,7 @@ MODULES = [
     {
         'name': 'cufft',
         'file': [
-            ('cupy.cuda.cufft', ['cupy/cuda/cupy_cufft.cpp']),
+            'cupy.cuda.cufft',
         ],
         'include': [
             'cufft.h',
