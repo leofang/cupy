@@ -825,13 +825,23 @@ class _UnixCCompiler(unixccompiler.UnixCCompiler):
 #                postargs3 = postargs + ['-lib', '-o', base_filename + '.a']
 #                print('3 - NVCC options:', postargs)
                 print("STEP 3")
-                obj_final = build_path+'/'+base_filename+'_rdc.a'
-                unixccompiler.UnixCCompiler.link(self, self.EXECUTABLE, [obj, obj_dev], obj_final,
-                                                 extra_preargs=['-lib',], extra_postargs=['-lcufft_static', '-lculibos'])
+#                obj_final = build_path+'/'+base_filename+'_rdc.a'
+#                unixccompiler.UnixCCompiler.link(self, self.EXECUTABLE, [obj, obj_dev], obj_final,
+#                                                 extra_preargs=['-lib',])#, extra_postargs=['-lcufft_static', '-lculibos'])
 
+#                print("STEP 4")
+#                self.linker_exe = _linker_exe
+                force = self.force
+                self.force = True
+                obj_shared = obj + '.so'
+                unixccompiler.UnixCCompiler.link(self, self.EXECUTABLE, [obj, obj_dev], obj_shared,
+                                                 extra_preargs=['-shared'],
+                                                 extra_postargs=[#'-L'+nvcc_path[0][:-4]+'/../lib64/', 
+                                                                 '-lcufft_static', '-lculibos'])
+                self.force = force
                 os.remove(obj)
                 os.remove(obj_dev)
-                os.rename(obj_final, obj)
+                os.rename(obj_shared, obj)
                 print("******************* MOM I AM DONE *******************")
         finally:
             self.compiler_so = _compiler_so

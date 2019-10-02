@@ -4,26 +4,20 @@
 #define INCLUDE_GUARD_CUPY_CUFFT_H
 
 #ifndef CUPY_NO_CUDA
+#include <stdint.h>
 #include <cufft.h>
 #include <cufftXt.h>
 
-extern cufftCallbackLoadC CUPY_host_cufft_callback_load_complex64;
-extern cufftCallbackLoadZ CUPY_host_cufft_callback_load_complex128;
-//cufftCallbackLoadR CUPY_host_cufft_callback_load_float32;
-//cufftCallbackLoadD CUPY_host_cufft_callback_load_float64;
-extern cufftCallbackStoreC CUPY_host_cufft_callback_store_complex64;
-extern cufftCallbackStoreZ CUPY_host_cufft_callback_store_complex128;
-//cufftCallbackStoreR CUPY_host_cufft_callback_store_float32;
-//cufftCallbackStoreD CUPY_host_cufft_callback_store_float64;
-
-cufftResult setCallbackLoadC(cufftHandle plan, void** callerInfo); 
-cufftResult setCallbackLoadZ(cufftHandle plan, void** callerInfo); 
+//extern "C"{
+cufftResult setCallbackLoadC(cufftHandle plan, intptr_t ptr, void** callerInfo); 
+cufftResult setCallbackLoadZ(cufftHandle plan, intptr_t ptr, void** callerInfo); 
 //cufftResult setCallbackLoadR(cufftHandle plan, void** callerInfo); 
 //cufftResult setCallbackLoadD(cufftHandle plan, void** callerInfo); 
-cufftResult setCallbackStoreC(cufftHandle plan, void** callerInfo);
-cufftResult setCallbackStoreZ(cufftHandle plan, void** callerInfo);
+cufftResult setCallbackStoreC(cufftHandle plan, intptr_t ptr, void** callerInfo);
+cufftResult setCallbackStoreZ(cufftHandle plan, intptr_t ptr, void** callerInfo);
 //cufftResult setCallbackStoreR(cufftHandle plan, void** callerInfo);
 //cufftResult setCallbackStoreD(cufftHandle plan, void** callerInfo);
+//}
 
 #else  // CUPY_NO_CUDA
 extern "C" {

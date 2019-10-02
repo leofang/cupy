@@ -10,12 +10,19 @@
 //extern __device__ cufftCallbackStoreR CUPY_device_cufft_callback_store_float32;
 //extern __device__ cufftCallbackStoreD CUPY_device_cufft_callback_store_float64;
 
+//cufftCallbackLoadR CUPY_host_cufft_callback_load_float32;
+//cufftCallbackLoadD CUPY_host_cufft_callback_load_float64;
+//cufftCallbackStoreR CUPY_host_cufft_callback_store_float32;
+//cufftCallbackStoreD CUPY_host_cufft_callback_store_float64;
 
-cufftResult setCallbackLoadC(cufftHandle plan, void** callerInfo) {
+
+cufftResult setCallbackLoadC(cufftHandle plan, intptr_t ptr, void** callerInfo) {
+    cufftCallbackLoadC CUPY_host_cufft_callback_load_complex64 = (cufftCallbackLoadC)ptr;
     return cufftXtSetCallback(plan, (void**)&CUPY_host_cufft_callback_load_complex64, CUFFT_CB_LD_COMPLEX, callerInfo);
 }
 
-cufftResult setCallbackLoadZ(cufftHandle plan, void** callerInfo) {
+cufftResult setCallbackLoadZ(cufftHandle plan, intptr_t ptr, void** callerInfo) {
+    cufftCallbackLoadZ CUPY_host_cufft_callback_load_complex128 = (cufftCallbackLoadZ)ptr;
     return cufftXtSetCallback(plan, (void**)&CUPY_host_cufft_callback_load_complex128, CUFFT_CB_LD_COMPLEX_DOUBLE, callerInfo);
 }
 
@@ -27,11 +34,13 @@ cufftResult setCallbackLoadZ(cufftHandle plan, void** callerInfo) {
 //    return cufftXtSetCallback(plan, (void**)&CUPY_host_cufft_callback_load_float64, CUFFT_CB_LD_REAL_DOUBLE, callerInfo);
 //}
 
-cufftResult setCallbackStoreC(cufftHandle plan, void** callerInfo) {
+cufftResult setCallbackStoreC(cufftHandle plan, intptr_t ptr, void** callerInfo) {
+    cufftCallbackStoreC CUPY_host_cufft_callback_store_complex64 = (cufftCallbackStoreC)ptr;
     return cufftXtSetCallback(plan, (void**)&CUPY_host_cufft_callback_store_complex64, CUFFT_CB_ST_COMPLEX, callerInfo);
 }
 
-cufftResult setCallbackStoreZ(cufftHandle plan, void** callerInfo) {
+cufftResult setCallbackStoreZ(cufftHandle plan, intptr_t ptr, void** callerInfo) {
+    cufftCallbackStoreZ CUPY_host_cufft_callback_store_complex128 = (cufftCallbackStoreZ)ptr;
     return cufftXtSetCallback(plan, (void**)&CUPY_host_cufft_callback_store_complex128, CUFFT_CB_ST_COMPLEX_DOUBLE, callerInfo);
 }
 
