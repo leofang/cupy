@@ -59,9 +59,13 @@ cdef extern from 'cupy_cufft.h' nogil:
     Result cufftExecZ2D(Handle plan, DoubleComplex *idata, Double *odata)
 
     # cuFFT Callback Function
-    Result setCallback(Handle plan, void** callbackRoutine, CallbackType type,
-                       void** callerInfo)
-    Result clearCallback(Handle plan, CallbackType type)
+    ctypedef Complex (*cufftCallbackLoadC)(void *dataIn, size_t offset, void *callerInfo, void *sharedPointer)
+    ctypedef DoubleComplex (*cufftCallbackLoadZ)(void *dataIn, size_t offset, void *callerInfo, void *sharedPointer)
+    ctypedef void (*cufftCallbackStoreC)(void *dataOut, size_t offset, Complex element, void *callerInfo, void *sharedPointer)
+    ctypedef void (*cufftCallbackStoreZ)(void *dataOut, size_t offset, DoubleComplex element, void *callerInfo, void *sharedPointer)
+#    Result setCallback(Handle plan, void** callbackRoutine, CallbackType type,
+#                       void** callerInfo)
+#    Result clearCallback(Handle plan, CallbackType type)
 #cufftCallbackLoadC CUPY_host_cufft_callback_load_complax64;
 #cufftCallbackLoadZ CUPY_host_cufft_callback_load_complex128;
 #cufftCallbackLoadR CUPY_host_cufft_callback_load_float32;
@@ -72,12 +76,16 @@ cdef extern from 'cupy_cufft.h' nogil:
 #cufftCallbackStoreD CUPY_host_cufft_callback_store_float64;
     Result setCallbackLoadC(Handle plan, void** callerInfo)
     Result setCallbackLoadZ(Handle plan, void** callerInfo)
-    Result setCallbackLoadR(Handle plan, void** callerInfo)
-    Result setCallbackLoadD(Handle plan, void** callerInfo)
+#    Result setCallbackLoadR(Handle plan, void** callerInfo)
+#    Result setCallbackLoadD(Handle plan, void** callerInfo)
     Result setCallbackStoreC(Handle plan, void** callerInfo)
     Result setCallbackStoreZ(Handle plan, void** callerInfo)
-    Result setCallbackStoreR(Handle plan, void** callerInfo)
-    Result setCallbackStoreD(Handle plan, void** callerInfo)
+#    Result setCallbackStoreR(Handle plan, void** callerInfo)
+#    Result setCallbackStoreD(Handle plan, void** callerInfo)
+    cufftCallbackLoadC CUPY_host_cufft_callback_load_complex64
+    cufftCallbackLoadZ CUPY_host_cufft_callback_load_complex128
+    cufftCallbackStoreC CUPY_host_cufft_callback_store_complex64
+    cufftCallbackStoreZ CUPY_host_cufft_callback_store_complex128
 
 
 cdef dict RESULT = {
@@ -331,23 +339,31 @@ class PlanNd(object):
         if out.shape != a.shape:
             raise ValueError('output shape mismatch')
 
-    def set_callback(self, intptr_t callerInfo=0, load_or_store=True):
+    def set_callback(self, intptr_t fx_ptr, load_or_store, intptr_t callerInfo=0):
         ''' load_or_store = True for load '''
         cdef Handle plan = self.plan
         cdef vector.vector[void*] cI
         cdef Result result
+        cdef cufftCallbackLoadC fxLC = <cufftCallbackLoadC>fx_ptr
+        cdef cufftCallbackStoreC fxSC = <cufftCallbackStoreC>fx_ptr
+        cdef cufftCallbackLoadZ fxLZ = <cufftCallbackLoadZ>fx_ptr
+        cdef cufftCallbackStoreZ fxSZ = <cufftCallbackStoreZ>fx_ptr
         cI.push_back(<void*>callerInfo)
 
         if self.fft_type == CUFFT_C2C and load_or_store:
+            CUPY_host_cufft_callback_load_complex64 = <void**>(&fxLC)
             with nogil:
                 result = setCallbackLoadC(plan, <void**>&(cI[0]))
         elif self.fft_type == CUFFT_C2C and not load_or_store:
+            CUPY_host_cufft_callback_store_complex64 = <void**>(&fxSC)
             with nogil:
                 result = setCallbackStoreC(plan, <void**>&(cI[0]))
         elif self.fft_type == CUFFT_Z2Z and load_or_store:
+            CUPY_host_cufft_callback_load_complex128 = <void**>(&fxLZ)
             with nogil:
                 result = setCallbackLoadZ(plan, <void**>&(cI[0]))
         elif self.fft_type == CUFFT_Z2Z and not load_or_store:
+            CUPY_host_cufft_callback_store_complex128 = <void**>(&fxSZ)
             with nogil:
                 result = setCallbackStoreZ(plan, <void**>&(cI[0]))
         check_result(result)

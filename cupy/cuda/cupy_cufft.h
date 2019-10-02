@@ -7,6 +7,15 @@
 #include <cufft.h>
 #include <cufftXt.h>
 
+extern cufftCallbackLoadC CUPY_host_cufft_callback_load_complex64;
+extern cufftCallbackLoadZ CUPY_host_cufft_callback_load_complex128;
+//cufftCallbackLoadR CUPY_host_cufft_callback_load_float32;
+//cufftCallbackLoadD CUPY_host_cufft_callback_load_float64;
+extern cufftCallbackStoreC CUPY_host_cufft_callback_store_complex64;
+extern cufftCallbackStoreZ CUPY_host_cufft_callback_store_complex128;
+//cufftCallbackStoreR CUPY_host_cufft_callback_store_float32;
+//cufftCallbackStoreD CUPY_host_cufft_callback_store_float64;
+
 cufftResult setCallbackLoadC(cufftHandle plan, void** callerInfo); 
 cufftResult setCallbackLoadZ(cufftHandle plan, void** callerInfo); 
 //cufftResult setCallbackLoadR(cufftHandle plan, void** callerInfo); 

@@ -84,113 +84,113 @@ MODULES = [
         'check_method': build.check_cuda_version,
         'version_method': build.get_cuda_version,
     },
-    {
-        'name': 'cudnn',
-        'file': [
-            'cupy.cuda.cudnn',
-            'cupy.cudnn',
-        ],
-        'include': [
-            'cudnn.h',
-        ],
-        'libraries': [
-            'cudnn',
-        ],
-        'check_method': build.check_cudnn_version,
-        'version_method': build.get_cudnn_version,
-    },
-    {
-        'name': 'nccl',
-        'file': [
-            'cupy.cuda.nccl',
-        ],
-        'include': [
-            'nccl.h',
-        ],
-        'libraries': [
-            'nccl',
-        ],
-        'check_method': build.check_nccl_version,
-        'version_method': build.get_nccl_version,
-    },
-    {
-        'name': 'cusolver',
-        'file': [
-            'cupy.cuda.cusolver',
-        ],
-        'include': [
-            'cusolverDn.h',
-        ],
-        'libraries': [
-            'cusolver',
-        ],
-        'check_method': build.check_cuda_version,
-    },
-    {
-        'name': 'nvtx',
-        'file': [
-            'cupy.cuda.nvtx',
-        ],
-        'include': [
-            'nvToolsExt.h',
-        ],
-        'libraries': [
-            'nvToolsExt' if not PLATFORM_WIN32 else 'nvToolsExt64_1',
-        ],
-        'check_method': build.check_nvtx,
-    },
-    {
-        # The value of the key 'file' is a list that contains extension names
-        # or tuples of an extension name and a list of other souces files
-        # required to build the extension such as .cpp files and .cu files.
-        #
-        #   <extension name> | (<extension name>, a list of <other source>)
-        #
-        # The extension name is also interpreted as the name of the Cython
-        # source file required to build the extension with appending '.pyx'
-        # file extension.
-        'name': 'thrust',
-        'file': [
-            ('cupy.cuda.thrust', ['cupy/cuda/cupy_thrust.cu']),
-        ],
-        'include': [
-            'thrust/device_ptr.h',
-            'thrust/sequence.h',
-            'thrust/sort.h',
-        ],
-        'libraries': [
-            'cudart',
-        ],
-        'check_method': build.check_cuda_version,
-    },
-    {
-        'name': 'cutensor',
-        'file': [
-            'cupy.cuda.cutensor',
-        ],
-        'include': [
-            'cutensor.h',
-        ],
-        'libraries': [
-            'cutensor',
-            'cublas',
-        ],
-        'check_method': build.check_cutensor_version,
-        'version_method': build.get_cutensor_version,
-    },
-    {
-        'name': 'cub',
-        'file': [
-            ('cupy.cuda.cub', ['cupy/cuda/cupy_cub.cu']),
-        ],
-        'include': [
-            'cub/util_namespace.cuh',  # dummy
-        ],
-        'libraries': [
-            'cudart',
-        ],
-        'check_method': build.check_cuda_version,
-    },
+#    {
+#        'name': 'cudnn',
+#        'file': [
+#            'cupy.cuda.cudnn',
+#            'cupy.cudnn',
+#        ],
+#        'include': [
+#            'cudnn.h',
+#        ],
+#        'libraries': [
+#            'cudnn',
+#        ],
+#        'check_method': build.check_cudnn_version,
+#        'version_method': build.get_cudnn_version,
+#    },
+#    {
+#        'name': 'nccl',
+#        'file': [
+#            'cupy.cuda.nccl',
+#        ],
+#        'include': [
+#            'nccl.h',
+#        ],
+#        'libraries': [
+#            'nccl',
+#        ],
+#        'check_method': build.check_nccl_version,
+#        'version_method': build.get_nccl_version,
+#    },
+#    {
+#        'name': 'cusolver',
+#        'file': [
+#            'cupy.cuda.cusolver',
+#        ],
+#        'include': [
+#            'cusolverDn.h',
+#        ],
+#        'libraries': [
+#            'cusolver',
+#        ],
+#        'check_method': build.check_cuda_version,
+#    },
+#    {
+#        'name': 'nvtx',
+#        'file': [
+#            'cupy.cuda.nvtx',
+#        ],
+#        'include': [
+#            'nvToolsExt.h',
+#        ],
+#        'libraries': [
+#            'nvToolsExt' if not PLATFORM_WIN32 else 'nvToolsExt64_1',
+#        ],
+#        'check_method': build.check_nvtx,
+#    },
+#    {
+#        # The value of the key 'file' is a list that contains extension names
+#        # or tuples of an extension name and a list of other souces files
+#        # required to build the extension such as .cpp files and .cu files.
+#        #
+#        #   <extension name> | (<extension name>, a list of <other source>)
+#        #
+#        # The extension name is also interpreted as the name of the Cython
+#        # source file required to build the extension with appending '.pyx'
+#        # file extension.
+#        'name': 'thrust',
+#        'file': [
+#            ('cupy.cuda.thrust', ['cupy/cuda/cupy_thrust.cu']),
+#        ],
+#        'include': [
+#            'thrust/device_ptr.h',
+#            'thrust/sequence.h',
+#            'thrust/sort.h',
+#        ],
+#        'libraries': [
+#            'cudart',
+#        ],
+#        'check_method': build.check_cuda_version,
+#    },
+#    {
+#        'name': 'cutensor',
+#        'file': [
+#            'cupy.cuda.cutensor',
+#        ],
+#        'include': [
+#            'cutensor.h',
+#        ],
+#        'libraries': [
+#            'cutensor',
+#            'cublas',
+#        ],
+#        'check_method': build.check_cutensor_version,
+#        'version_method': build.get_cutensor_version,
+#    },
+#    {
+#        'name': 'cub',
+#        'file': [
+#            ('cupy.cuda.cub', ['cupy/cuda/cupy_cub.cu']),
+#        ],
+#        'include': [
+#            'cub/util_namespace.cuh',  # dummy
+#        ],
+#        'libraries': [
+#            'cudart',
+#        ],
+#        'check_method': build.check_cuda_version,
+#    },
     {
         'name': 'cufft',
         'file': [
@@ -315,8 +315,8 @@ def preconfigure_modules(compiler, settings):
 
         # check if we want to link to cuFFT dynamically (default) or statically
         if module['name'] == 'cufft':
-            static_linking = os.environ.get('CUPY_CUFFT_STATIC', False)
-            if static_linking:
+            static_linking = os.environ.get('CUPY_CUFFT_STATIC', "0")
+            if static_linking == "1":
                 module['include'].append('cufftXt.h')
 #                module['libraries'].append('cufft_static')
 #                module['libraries'].append('culibos')
