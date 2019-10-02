@@ -62,6 +62,22 @@ cdef extern from 'cupy_cufft.h' nogil:
     Result setCallback(Handle plan, void** callbackRoutine, CallbackType type,
                        void** callerInfo)
     Result clearCallback(Handle plan, CallbackType type)
+#cufftCallbackLoadC CUPY_host_cufft_callback_load_complax64;
+#cufftCallbackLoadZ CUPY_host_cufft_callback_load_complex128;
+#cufftCallbackLoadR CUPY_host_cufft_callback_load_float32;
+#cufftCallbackLoadD CUPY_host_cufft_callback_load_float64;
+#cufftCallbackStoreC CUPY_host_cufft_callback_store_complax64;
+#cufftCallbackStoreZ CUPY_host_cufft_callback_store_complax128;
+#cufftCallbackStoreR CUPY_host_cufft_callback_store_float32;
+#cufftCallbackStoreD CUPY_host_cufft_callback_store_float64;
+    Result setCallbackLoadC(Handle plan, void** callerInfo)
+    Result setCallbackLoadZ(Handle plan, void** callerInfo)
+    Result setCallbackLoadR(Handle plan, void** callerInfo)
+    Result setCallbackLoadD(Handle plan, void** callerInfo)
+    Result setCallbackStoreC(Handle plan, void** callerInfo)
+    Result setCallbackStoreZ(Handle plan, void** callerInfo)
+    Result setCallbackStoreR(Handle plan, void** callerInfo)
+    Result setCallbackStoreD(Handle plan, void** callerInfo)
 
 
 cdef dict RESULT = {
@@ -315,16 +331,25 @@ class PlanNd(object):
         if out.shape != a.shape:
             raise ValueError('output shape mismatch')
 
-    def set_callback(self, intptr_t callbackRoutine, int type,
-                     intptr_t callerInfo=0):
+    def set_callback(self, intptr_t callerInfo=0, load_or_store=True):
+        ''' load_or_store = True for load '''
         cdef Handle plan = self.plan
-        cdef vector.vector[void*] cb, cI
-        cb.push_back(<void*>callbackRoutine)
+        cdef vector.vector[void*] cI
+        cdef Result result
         cI.push_back(<void*>callerInfo)
 
-        with nogil:
-            result = setCallback(plan, <void**>&(cb[0]), <CallbackType>type,
-                                 <void**>&(cI[0]))
+        if self.fft_type == CUFFT_C2C and load_or_store:
+            with nogil:
+                result = setCallbackLoadC(plan, <void**>&(cI[0]))
+        elif self.fft_type == CUFFT_C2C and not load_or_store:
+            with nogil:
+                result = setCallbackStoreC(plan, <void**>&(cI[0]))
+        elif self.fft_type == CUFFT_Z2Z and load_or_store:
+            with nogil:
+                result = setCallbackLoadZ(plan, <void**>&(cI[0]))
+        elif self.fft_type == CUFFT_Z2Z and not load_or_store:
+            with nogil:
+                result = setCallbackStoreZ(plan, <void**>&(cI[0]))
         check_result(result)
 
 #    def unset_callback(self):

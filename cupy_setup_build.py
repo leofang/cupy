@@ -318,9 +318,10 @@ def preconfigure_modules(compiler, settings):
             static_linking = os.environ.get('CUPY_CUFFT_STATIC', False)
             if static_linking:
                 module['include'].append('cufftXt.h')
-                module['libraries'].append('cufft_static')
-                module['libraries'].append('culibos')
-                module['libraries'].append('cudadevrt')
+#                module['libraries'].append('cufft_static')
+#                module['libraries'].append('culibos')
+#                module['libraries'].append('cudadevrt')
+                module['libraries'].append('cufft')
             else:
                 module['libraries'].append('cufft')
 
@@ -802,13 +803,13 @@ class _UnixCCompiler(unixccompiler.UnixCCompiler):
                 print("******************* MOM I AM HERE *******************")
                 base_filename = filename[:-3]
                 build_path = os.path.split(obj)[0]
-                del postargs[-2]
-                print('NVCC options:', postargs)
+#                del postargs[-2]
+#                print('NVCC options:', postargs)
 #                postargs1 = postargs + ['-dc'] #, '-o', base_filename + '.o']
 #                print('1 - NVCC options:', postargs1)
                 print("STEP 1")
                 unixccompiler.UnixCCompiler._compile(
-                    self, obj, src, ext, base_opts + cc_args + ['-dc'], postargs, pp_opts)
+                    self, obj, src, ext, base_opts + ['-dc'] + cc_args, postargs, pp_opts)
 
                 print("+++++++++++", build_path, "+++++++++++")
 
@@ -824,9 +825,9 @@ class _UnixCCompiler(unixccompiler.UnixCCompiler):
 #                postargs3 = postargs + ['-lib', '-o', base_filename + '.a']
 #                print('3 - NVCC options:', postargs)
                 print("STEP 3")
-                obj_final = build_path+'/lib'+base_filename+'_rdc.a'
+                obj_final = build_path+'/'+base_filename+'_rdc.a'
                 unixccompiler.UnixCCompiler.link(self, self.EXECUTABLE, [obj, obj_dev], obj_final,
-                                                 extra_preargs=['-lib',])#, extra_postargs=postargs)
+                                                 extra_preargs=['-lib',], extra_postargs=['-lcufft_static', '-lculibos'])
 
                 os.remove(obj)
                 os.remove(obj_dev)
