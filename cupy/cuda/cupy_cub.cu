@@ -1,5 +1,5 @@
 #include <cupy/complex.cuh>
-#include <cub/device/device_reduce.cuh>
+#include <cupy/cub/device/device_reduce.cuh>
 #include "cupy_cub.h"
 #include <stdexcept>
 
