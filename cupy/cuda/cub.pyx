@@ -149,29 +149,38 @@ def device_segmented_reduce(ndarray x, int op, axis, out=None,
 
     # prepare input
     out_shape, contiguous_size = _preprocess_array(x, axis, keepdims)
-    x_ptr = <void*>x.data.ptr
-    y = ndarray(out_shape, dtype=x.dtype)
-    y_ptr = <void*>y.data.ptr
     if out is not None and out.shape != out_shape:
         raise ValueError(
             "output parameter for reduction operation has the wrong shape")
     n_segments = x.size//contiguous_size
-    # CUB internally use int for offset...
-    offset = arange(0, x.size+1, contiguous_size, dtype=numpy.int32)
-    offset_start_ptr = <void*>offset.data.ptr
-    offset_end_ptr = <void*>((<int*><void*>offset.data.ptr)+1)
-    s = <Stream_t>stream.get_current_stream_ptr()
-    dtype_id = _get_dtype_id(x.dtype)
+    if contiguous_size > 184320:
+        # 184320 = 49152 (shmem size) * 30 (max active blocks on K40)
+        #          / 8 (size of double)
+        x = x.reshape(n_segments, contiguous_size)
+        y = ndarray((n_segments,), dtype=x.dtype)
+        for i in range(n_segments):
+            y[i] = device_reduce(x[i], op, y[i], keepdims)
+        y = y.reshape(out_shape)
+    else:
+        x_ptr = <void*>x.data.ptr
+        y = ndarray(out_shape, dtype=x.dtype)
+        y_ptr = <void*>y.data.ptr
+        # CUB internally use int for offset...
+        offset = arange(0, x.size+1, contiguous_size, dtype=numpy.int32)
+        offset_start_ptr = <void*>offset.data.ptr
+        offset_end_ptr = <void*>((<int*><void*>offset.data.ptr)+1)
+        s = <Stream_t>stream.get_current_stream_ptr()
+        dtype_id = _get_dtype_id(x.dtype)
 
-    # get workspace size and then fire up
-    ws_size = cub_device_segmented_reduce_get_workspace_size(
-        x_ptr, y_ptr, n_segments, offset_start_ptr, offset_end_ptr, s,
-        op, dtype_id)
-    ws = ndarray(ws_size, numpy.int8)
-    ws_ptr = <void*>ws.data.ptr
-    cub_device_segmented_reduce(ws_ptr, ws_size, x_ptr, y_ptr, n_segments,
-                                offset_start_ptr, offset_end_ptr, s,
-                                op, dtype_id)
+        # get workspace size and then fire up
+        ws_size = cub_device_segmented_reduce_get_workspace_size(
+            x_ptr, y_ptr, n_segments, offset_start_ptr, offset_end_ptr, s,
+            op, dtype_id)
+        ws = ndarray(ws_size, numpy.int8)
+        ws_ptr = <void*>ws.data.ptr
+        cub_device_segmented_reduce(ws_ptr, ws_size, x_ptr, y_ptr, n_segments,
+                                    offset_start_ptr, offset_end_ptr, s,
+                                    op, dtype_id)
 
     if out is not None:
         out[...] = y
