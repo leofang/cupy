@@ -1,6 +1,6 @@
 #include <cupy/complex.cuh>
-#include <cupy/cub/device/device_reduce.cuh>
-#include <cupy/cub/device/device_segmented_reduce.cuh>
+#include <cupy/cub/cub/device/device_reduce.cuh>
+#include <cupy/cub/cub/device/device_segmented_reduce.cuh>
 #include "cupy_cub.h"
 #include <stdexcept>
 
