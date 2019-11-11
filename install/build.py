@@ -162,13 +162,10 @@ def get_compiler_setting(use_hip):
         else:
             define_macros.append(('CUPY_NO_NVTX', '1'))
 
-    cub_path = os.environ.get('CUB_PATH', '')
-    if os.path.exists(cub_path):
-        # for <cupy/complex.cuh>
-        cupy_header = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                   '../cupy/core/include')
-        include_dirs.append(cupy_header)
-        include_dirs.append(cub_path)
+    # for CUB, we need the complex and CUB headers
+    cupy_header = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               '../cupy/core/include')
+    include_dirs.append(cupy_header)
 
     return {
         'include_dirs': include_dirs,
