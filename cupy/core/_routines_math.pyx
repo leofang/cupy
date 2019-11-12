@@ -15,8 +15,7 @@ from cupy.core.core cimport compile_with_cache
 from cupy.core.core cimport ndarray
 from cupy.cuda cimport memory
 
-if cupy.cuda.cub_enabled:
-    from cupy.cuda import cub
+from cupy.cuda import cub
 
 
 # ndarray members
