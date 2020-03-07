@@ -7,3 +7,5 @@ cpdef enum cupy_cub_op:
     CUPY_CUB_CUMSUM = 5
     CUPY_CUB_CUMPROD = 6
     CUPY_CUB_PROD = 7
+    CUPY_CUB_ALL = 8
+    CUPY_CUB_ANY = 9

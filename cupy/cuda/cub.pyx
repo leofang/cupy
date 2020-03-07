@@ -37,13 +37,15 @@ cdef enum:
     CUPY_CUB_FLOAT64 = 10
     CUPY_CUB_COMPLEX64 = 11
     CUPY_CUB_COMPLEX128 = 12
+    CUPY_CUB_BOOL = 13
 
 CUB_support_dtype_without_half = [numpy.int8, numpy.uint8,
                                   numpy.int16, numpy.uint16,
                                   numpy.int32, numpy.uint32,
                                   numpy.int64, numpy.uint64,
                                   numpy.float32, numpy.float64,
-                                  numpy.complex64, numpy.complex128]
+                                  numpy.complex64, numpy.complex128,
+                                  numpy.bool]
 
 CUB_support_dtype_with_half = CUB_support_dtype_without_half + [numpy.float16]
 
@@ -138,10 +140,11 @@ def device_reduce(ndarray x, op, tuple out_axis, out=None,
             'output parameter for reduction operation has the wrong number of '
             'dimensions')
     if op not in (CUPY_CUB_SUM, CUPY_CUB_PROD, CUPY_CUB_MIN, CUPY_CUB_MAX,
-                  CUPY_CUB_ARGMIN, CUPY_CUB_ARGMAX):
+                  CUPY_CUB_ARGMIN, CUPY_CUB_ARGMAX, CUPY_CUB_ALL,
+                  CUPY_CUB_ANY):
         raise ValueError('only CUPY_CUB_SUM, CUPY_CUB_PROD, CUPY_CUB_MIN, '
-                         'CUPY_CUB_MAX, CUPY_CUB_ARGMIN, and CUPY_CUB_ARGMAX '
-                         'are supported.')
+                         'CUPY_CUB_MAX, CUPY_CUB_ARGMIN, CUPY_CUB_ARGMAX, '
+                         'CUPY_CUB_ALL, and CUPY_CUB_ANY are supported.')
     if x.size == 0 and op not in (CUPY_CUB_SUM, CUPY_CUB_PROD):
         raise ValueError('zero-size array to reduction operation {} which has '
                          'no identity'.format(op.name))
@@ -149,6 +152,8 @@ def device_reduce(ndarray x, op, tuple out_axis, out=None,
 
     if op in (CUPY_CUB_SUM, CUPY_CUB_PROD, CUPY_CUB_MIN, CUPY_CUB_MAX):
         y = ndarray((), x.dtype)
+    elif op in (CUPY_CUB_ALL, CUPY_CUB_ANY):
+        y = ndarray((), numpy.bool)
     else:  # argmin and argmax
         # cub::KeyValuePair has 1 int + 1 arbitrary type
         kv_bytes = (4 + x.dtype.itemsize)
@@ -516,6 +521,8 @@ def _get_dtype_id(dtype):
         ret = CUPY_CUB_COMPLEX64
     elif dtype == numpy.complex128:
         ret = CUPY_CUB_COMPLEX128
+    elif dtype == numpy.bool:
+        ret = CUPY_CUB_BOOL
     else:
         raise ValueError('Unsupported dtype ({})'.format(dtype))
     return ret

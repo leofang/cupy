@@ -14,6 +14,7 @@
 #define CUPY_CUB_FLOAT64    10
 #define CUPY_CUB_COMPLEX64  11
 #define CUPY_CUB_COMPLEX128 12
+#define CUPY_CUB_BOOL       13
 
 #define CUPY_CUB_SUM     0
 #define CUPY_CUB_MIN     1
@@ -23,6 +24,8 @@
 #define CUPY_CUB_CUMSUM  5
 #define CUPY_CUB_CUMPROD 6
 #define CUPY_CUB_PROD    7
+#define CUPY_CUB_ALL     8
+#define CUPY_CUB_ANY     9
 
 #ifndef CUPY_NO_CUDA
 #include <cuda_runtime.h>  // for cudaStream_t

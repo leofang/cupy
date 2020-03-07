@@ -47,11 +47,24 @@ struct FpLimits<complex<double>>
 
 template <> struct NumericTraits<complex<float>>  : BaseTraits<FLOATING_POINT, true, false, unsigned int, complex<float>> {};
 template <> struct NumericTraits<complex<double>> : BaseTraits<FLOATING_POINT, true, false, unsigned long long, complex<double>> {};
+
+static __host__ __device__ __forceinline__ bool _complex_to_bool(complex<float> x) {
+    return (x != complex<float>(0.0f, 0.0f));
+}
+
+static __host__ __device__ __forceinline__ bool _complex_to_bool(complex<double> x) {
+    return (x != complex<double>(0.0l, 0.0l));
+}
+
+static __host__ __device__ __forceinline__ bool(complex<float> x) {
+    return (x != complex<float>(0.0f, 0.0f));
+}
+
 /* ------------------------------------ end of boilerplate ------------------------------------ */
 
 
 /* ------------------------------------ "Patches" to CUB ------------------------------------
-   This stub is needed because CUB does not have a built-in "prod" operator
+   These stub are needed because CUB does not have a built-in "prod", "AND", or "OR" operator
 */
 
 //
@@ -63,6 +76,40 @@ struct _multiply
     __host__ __device__ __forceinline__ T operator()(const T &a, const T &b) const
     {
         return a * b;
+    }
+};
+
+//
+// logical and functor
+//
+struct _and
+{
+    template <typename T>
+    __host__ __device__ __forceinline__ T operator()(const T &a, const T &b) const
+    {
+        return a & b;
+    }
+};
+
+//template <>
+//__host__ __device__ __forceinline__ bool _and::operator()(const complex<float> &a, const complex<float> &b) const {
+//    return (_complex_to_bool(a) & _complex_to_bool(b));
+//}
+//
+//template <>
+//__host__ __device__ __forceinline__ bool _and::operator()(const complex<double> &a, const complex<double> &b) const {
+//    return (_complex_to_bool(a) & _complex_to_bool(b));
+//}
+
+//
+// logical or functor
+//
+struct _or
+{
+    template <typename T>
+    __host__ __device__ __forceinline__ bool operator()(const T &a, const T &b) const
+    {
+        return bool(a) | bool(b);
     }
 };
 
@@ -430,6 +477,7 @@ void dtype_dispatcher(int dtype_id, functor_t f, Ts&&... args)
     case CUPY_CUB_FLOAT64:    return f.template operator()<double>(std::forward<Ts>(args)...);
     case CUPY_CUB_COMPLEX64:  return f.template operator()<complex<float>>(std::forward<Ts>(args)...);
     case CUPY_CUB_COMPLEX128: return f.template operator()<complex<double>>(std::forward<Ts>(args)...);
+    case CUPY_CUB_BOOL:       return f.template operator()<bool>(std::forward<Ts>(args)...);
     default:
 	throw std::runtime_error("Unsupported dtype ID");
     }
@@ -539,6 +587,62 @@ struct _cub_segmented_reduce_max {
 };
 
 //
+// **** CUB All ****
+//
+struct _cub_reduce_all {
+    template <typename T>
+    void operator()(void* workspace, size_t& workspace_size, void* x, void* y,
+        int num_items, cudaStream_t s)
+    {
+        _and logic_op;
+        DeviceReduce::Reduce(workspace, workspace_size, static_cast<T*>(x),
+            static_cast<bool*>(y), num_items, logic_op, true, s);
+    }
+};
+
+struct _cub_segmented_reduce_all {
+    template <typename T>
+    void operator()(void* workspace, size_t& workspace_size, void* x, void* y,
+        int num_segments, void* offset_start, void* offset_end, cudaStream_t s)
+    {
+        _and logic_op;
+        DeviceSegmentedReduce::Reduce(workspace, workspace_size,
+            static_cast<T*>(x), static_cast<bool*>(y), num_segments,
+            static_cast<int*>(offset_start),
+            static_cast<int*>(offset_end),
+            logic_op, true, s);
+    }
+};
+
+//
+// **** CUB Any ****
+//
+struct _cub_reduce_any {
+    template <typename T>
+    void operator()(void* workspace, size_t& workspace_size, void* x, void* y,
+        int num_items, cudaStream_t s)
+    {
+        _or logic_op;
+        DeviceReduce::Reduce(workspace, workspace_size, static_cast<T*>(x),
+            static_cast<bool*>(y), num_items, logic_op, false, s);
+    }
+};
+
+struct _cub_segmented_reduce_any {
+    template <typename T>
+    void operator()(void* workspace, size_t& workspace_size, void* x, void* y,
+        int num_segments, void* offset_start, void* offset_end, cudaStream_t s)
+    {
+        _or logic_op;
+        DeviceSegmentedReduce::Reduce(workspace, workspace_size,
+            static_cast<T*>(x), static_cast<bool*>(y), num_segments,
+            static_cast<int*>(offset_start),
+            static_cast<int*>(offset_end),
+            logic_op, false, s);
+    }
+};
+
+//
 // **** CUB ArgMin ****
 //
 struct _cub_reduce_argmin {
@@ -611,9 +715,7 @@ struct _cub_inclusive_product {
     }
 };
 
-//
-// APIs exposed to CuPy
-//
+/*  ------------------------------------ APIs exposed to CuPy ------------------------------------ */
 
 /* -------- device reduce -------- */
 
@@ -632,6 +734,10 @@ void cub_device_reduce(void* workspace, size_t& workspace_size, void* x, void* y
     case CUPY_CUB_ARGMAX:   return dtype_dispatcher(dtype_id, _cub_reduce_argmax(),
                                 workspace, workspace_size, x, y, num_items, stream);
     case CUPY_CUB_PROD:     return dtype_dispatcher(dtype_id, _cub_reduce_prod(),
+                                workspace, workspace_size, x, y, num_items, stream);
+    case CUPY_CUB_ALL:      return dtype_dispatcher(dtype_id, _cub_reduce_all(),
+                                workspace, workspace_size, x, y, num_items, stream);
+    case CUPY_CUB_ANY:      return dtype_dispatcher(dtype_id, _cub_reduce_any(),
                                 workspace, workspace_size, x, y, num_items, stream);
     default:            throw std::runtime_error("Unsupported operation");
     }
@@ -667,6 +773,14 @@ void cub_device_segmented_reduce(void* workspace, size_t& workspace_size,
                    offset_end, stream);
     case CUPY_CUB_PROD:
         return dtype_dispatcher(dtype_id, _cub_segmented_reduce_prod(),
+                   workspace, workspace_size, x, y, num_segments, offset_start,
+                   offset_end, stream);
+    case CUPY_CUB_ALL:
+        return dtype_dispatcher(dtype_id, _cub_segmented_reduce_all(),
+                   workspace, workspace_size, x, y, num_segments, offset_start,
+                   offset_end, stream);
+    case CUPY_CUB_ANY:
+        return dtype_dispatcher(dtype_id, _cub_segmented_reduce_any(),
                    workspace, workspace_size, x, y, num_segments, offset_start,
                    offset_end, stream);
     default:
@@ -733,3 +847,5 @@ size_t cub_device_scan_get_workspace_size(void* x, void* y, int num_items,
                     op, dtype_id);
     return workspace_size;
 }
+
+/*  ------------------------------------ End of CuPy APIs ------------------------------------ */
