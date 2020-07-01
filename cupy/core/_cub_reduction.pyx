@@ -289,9 +289,9 @@ cdef inline tuple _can_use_cub_block_reduction(
     # definitions). To circumvent this, we fall back to the old kernel.
     # TODO(leofang): can we relax this?
     if in_arr.dtype.kind != out_arr.dtype.kind:
-        # cannot cast complex to anything else
-        if in_arr.dtype.kind == 'c':
-            return None
+        ## cannot cast complex to anything else
+        #if in_arr.dtype.kind == 'c':
+        #    return None
         # cannot cast float16 to complex
         if in_arr.dtype.char == 'e' and out_arr.dtype.kind == 'c':
             return None
@@ -550,13 +550,15 @@ def _get_cub_optimized_params(
         trial.set_user_attr('block_size', block_size)
         return block_size, items_per_thread
 
+    # CUDA_ERROR_LAUNCH_OUT_OF_RESOURCES is a possible error
+    from cupy.cuda import driver
     optimize_impl = optimize_config.optimize_impl
     best = optimize_impl(
         optimize_config, target_func, suggest_func,
         default_best={
             'block_size_log': default_block_size_log,
             'items_per_thread': default_items_per_thread,
-        })
+        }, ignore_error=(driver.CUDADriverError,))
 
     return best.params['items_per_thread'], best.user_attrs['block_size']
 
