@@ -284,18 +284,6 @@ cdef inline tuple _can_use_cub_block_reduction(
     if axis_permutes_cub != tuple(range(in_arr.ndim)):
         return None
 
-    # To support generic reductions, note that some NumPy casting rules
-    # are not applicable in the C++ space (unless we tweak the type
-    # definitions). To circumvent this, we fall back to the old kernel.
-    # TODO(leofang): can we relax this?
-    if in_arr.dtype.kind != out_arr.dtype.kind:
-        ## cannot cast complex to anything else
-        #if in_arr.dtype.kind == 'c':
-        #    return None
-        # cannot cast float16 to complex
-        if in_arr.dtype.char == 'e' and out_arr.dtype.kind == 'c':
-            return None
-
     # full-reduction of N-D array: need to invoke the kernel twice
     cdef bint full_reduction = True if len(out_axis) == 0 else False
 
@@ -542,7 +530,7 @@ def _get_cub_optimized_params(
             post_map_expr, reduce_type, stream, params, cub_params)
 
     def suggest_func(trial):
-        block_size_log = trial.suggest_int('block_size_log', 5, 9)
+        block_size_log = trial.suggest_int('block_size_log', 5, 10)
         block_size = 2 ** block_size_log
         items_per_thread = trial.suggest_int(
             'items_per_thread', 2, 32, step=2)
