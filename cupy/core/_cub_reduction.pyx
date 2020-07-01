@@ -15,6 +15,7 @@ import math
 import string
 from cupy import _environment
 from cupy.core._kernel import _get_param_info
+from cupy.cuda import driver
 from cupy import util
 
 
@@ -539,7 +540,6 @@ def _get_cub_optimized_params(
         return block_size, items_per_thread
 
     # CUDA_ERROR_LAUNCH_OUT_OF_RESOURCES is a possible error
-    from cupy.cuda import driver
     optimize_impl = optimize_config.optimize_impl
     best = optimize_impl(
         optimize_config, target_func, suggest_func,
