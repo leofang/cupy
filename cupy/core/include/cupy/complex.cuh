@@ -2,27 +2,27 @@
 
 #include <cupy/complex/complex.h>
 
-using thrust::complex;
-using thrust::conj;
-using thrust::real;
-using thrust::imag;
-using thrust::arg;
+using cupy::thrust::complex;
+using cupy::thrust::conj;
+using cupy::thrust::real;
+using cupy::thrust::imag;
+using cupy::thrust::arg;
 
-using thrust::exp;
-using thrust::log;
-using thrust::log10;
-using thrust::sin;
-using thrust::cos;
-using thrust::tan;
-using thrust::sinh;
-using thrust::cosh;
-using thrust::tanh;
-using thrust::asinh;
-using thrust::acosh;
-using thrust::atanh;
-using thrust::asin;
-using thrust::acos;
-using thrust::atan;
+using cupy::thrust::exp;
+using cupy::thrust::log;
+using cupy::thrust::log10;
+using cupy::thrust::sin;
+using cupy::thrust::cos;
+using cupy::thrust::tan;
+using cupy::thrust::sinh;
+using cupy::thrust::cosh;
+using cupy::thrust::tanh;
+using cupy::thrust::asinh;
+using cupy::thrust::acosh;
+using cupy::thrust::atanh;
+using cupy::thrust::asin;
+using cupy::thrust::acos;
+using cupy::thrust::atan;
 
 template<typename T>
 __host__ __device__ bool isnan(complex<T> x) {

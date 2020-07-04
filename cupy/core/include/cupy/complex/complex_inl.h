@@ -19,6 +19,7 @@
 
 #include <cupy/complex/complex.h>
 
+namespace cupy {
 namespace thrust {
 
 /* --- Constructors --- */
@@ -99,7 +100,9 @@ template <typename T>
 __host__ __device__ inline bool operator!=(const complex<T>& lhs, const T& rhs) {
   return !(lhs == rhs);
 }
-}
+
+}  // namespace thrust
+}  // namespace cupy
 
 
 #include <cupy/complex/arithmetic.h>

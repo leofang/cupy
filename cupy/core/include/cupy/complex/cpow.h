@@ -2,6 +2,7 @@
 
 #include <cupy/complex/complex.h>
 
+namespace cupy {
 namespace thrust {
 
 template <typename T>
@@ -43,4 +44,5 @@ __host__ __device__ inline complex<typename _select_greater_type<T, U>::type> po
   return pow(PromotedType(x), complex<PromotedType>(exponent));
 }
 
-}
+}  // namespace thrust
+}  // namespace cupy

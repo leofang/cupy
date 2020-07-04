@@ -51,6 +51,7 @@
 #include <cupy/complex/complex.h>
 #include <cupy/complex/math_private.h>
 
+namespace cupy {
 namespace thrust {
 namespace detail {
 namespace complex {
@@ -139,3 +140,4 @@ __host__ __device__ inline complex<float> sqrt(const complex<float>& z) {
 }
 
 }  // namespace thrust
+}  // namespace cupy

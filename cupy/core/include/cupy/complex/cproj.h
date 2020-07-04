@@ -20,6 +20,7 @@
 #include <cupy/complex/complex.h>
 #include <cupy/complex/math_private.h>
 
+namespace cupy {
 namespace thrust {
 namespace detail {
 namespace complex {
@@ -61,4 +62,6 @@ template <>
 __host__ __device__ inline thrust::complex<float> proj(const thrust::complex<float>& z) {
   return detail::complex::cprojf(z);
 }
-}
+
+}  // namespace thrust
+}  // namespace cupy

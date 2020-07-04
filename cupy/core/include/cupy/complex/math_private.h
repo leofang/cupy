@@ -32,6 +32,7 @@
 
 #pragma once
 
+namespace cupy {
 namespace thrust {
 
 const float FLT_MIN = 1.17549435e-38F;
@@ -184,3 +185,4 @@ using ::signbit;
 using ::isfinite;
 
 }  // namespace thrust
+}  // namespace cupy

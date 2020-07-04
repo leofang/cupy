@@ -51,6 +51,7 @@
 #include <cupy/complex/complex.h>
 #include <cupy/complex/math_private.h>
 
+namespace cupy {
 namespace thrust {
 namespace detail {
 namespace complex {
@@ -728,3 +729,4 @@ __host__ __device__ inline complex<double> atanh(const complex<double>& z) {
 #endif
 
 }  // namespace thrust
+}  // namespace cupy

@@ -52,6 +52,7 @@
 #include <cupy/complex/complex.h>
 #include <cupy/complex/math_private.h>
 
+namespace cupy {
 namespace thrust {
 namespace detail {
 namespace complex {
@@ -171,3 +172,4 @@ __host__ __device__ inline complex<double> exp(const complex<double>& z) {
 }
 
 }  // namespace thrust
+}  // namespace cupy

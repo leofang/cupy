@@ -20,6 +20,7 @@
 
 #pragma once
 
+namespace cupy {
 namespace thrust {
 
 template <typename T, typename U, bool x>
@@ -613,6 +614,7 @@ __host__ __device__ inline bool operator!=(const T& lhs, const complex<T>& rhs);
 template <typename T>
 __host__ __device__ inline bool operator!=(const complex<T>& lhs, const T& rhs);
 
-}  // end namespace thrust
+}  // namespace thrust
+}  // namespace cupy
 
 #include <cupy/complex/complex_inl.h>
