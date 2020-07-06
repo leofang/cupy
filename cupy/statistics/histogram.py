@@ -279,7 +279,57 @@ def histogram(x, bins=10, range=None, weights=None, density=False):
 # TODO(okuta): Implement histogram2d
 
 
-# TODO(okuta): Implement histogramdd
+def histogramdd(x, bins=10, range=None, density=False, weights=None):
+    """Compute the multidimensional histogram of some data.
+
+    Args:
+        x (cupy.ndarray): Input array of shape (N, D). Note that unlike in
+            NumPy, an array-like input of shape (D, N) is not (yet) supported.
+
+        # TODO(leofang): clean up docstrings below
+
+        bins (int or cupy.ndarray): If ``bins`` is an int, it represents the
+            number of bins. If ``bins`` is an :class:`~cupy.ndarray`, it
+            represents a bin edges.
+        range (2-tuple of float, optional): The lower and upper range of the
+            bins.  If not provided, range is simply ``(x.min(), x.max())``.
+            Values outside the range are ignored. The first element of the
+            range must be less than or equal to the second. `range` affects the
+            automatic bin computation as well. While bin width is computed to
+            be optimal based on the actual data within `range`, the bin count
+            will fill the entire range including portions containing no data.
+        density (bool, optional): If False, the default, returns the number of
+            samples in each bin. If True, returns the probability *density*
+            function at the bin, ``bin_count / sample_count / bin_volume``.
+        weights (cupy.ndarray, optional): An array of weights, of the same
+            shape as `x`.  Each value in `x` only contributes its associated
+            weight towards the bin count (instead of 1).
+    Returns:
+        tuple: ``(hist, bin_edges)`` where ``hist`` is a :class:`cupy.ndarray`
+        storing the values of the histogram, and ``bin_edges`` is a
+        :class:`cupy.ndarray` storing the bin edges.
+
+    .. warning::
+
+        This function may synchronize the device.
+
+    .. seealso:: :func:`numpy.histogram`
+    """
+
+    if x.dtype.kind == 'c':
+        # TODO(leofang): support complex numbers
+        raise NotImplementedError('complex number is not supported')
+
+    if not isinstance(x, cupy.ndarray):
+        raise ValueError("x must be a cupy.ndarray")
+
+    x, weights = _ravel_and_check_weights(x, weights)
+    bin_edges = _get_bin_edges(x, bins, range)
+
+    if weights is None:
+        pass
+    else:
+        raise NotImplementedError('currently weights are not supported')
 
 
 _bincount_kernel = core.ElementwiseKernel(
