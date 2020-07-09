@@ -1203,6 +1203,7 @@ def _generate_boundary_condition_ops(mode, ix, xsize):
     return ops
 
 
+# TODO(leofang): use cupy/core/include/cupy/type_traits.cuh instead
 _CAST_FUNCTION = """
 // Implements a casting function to make it compatible with scipy
 // Use like cast<to_type>(value)
