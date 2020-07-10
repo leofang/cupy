@@ -99,11 +99,11 @@ struct complex {
   inline __host__ __device__ complex(const complex<X>& z);
 
   /*! Construct a complex number from its real and imaginary parts, possibly
-   * of different types.
+   *  of different types.
    *
-   * Note: This version of constructors does not exist in Thrust. However, it
-   * is a useful one to comply with NumPy. This is expected only for converting
-   * half to complex<T>, so placed in the last search precedence.
+   *  Note: This constructor version does not exist in Thrust. However, it is
+   *  a useful one to comply with NumPy. This is expected only for converting
+   *  half to complex<T>, so placed in the last search precedence.
    *
    *  \param re The real part of the number.
    *  \param im The imaginary part of the number.

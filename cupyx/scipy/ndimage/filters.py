@@ -1210,6 +1210,8 @@ using namespace cupy;
 // Implements a casting function to make it compatible with scipy
 // Use like cast<to_type>(value)
 
+// Requires compiling with --std=c++11 or higher
+
 template <typename B, typename A>
 __device__
 typename enable_if<!is_floating_point<A>::value||is_signed<B>::value, B>::type

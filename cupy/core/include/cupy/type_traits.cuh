@@ -1,10 +1,10 @@
 /*
- * Small bit of <type_traits> which cannot be imported in NVRTC
- * Requires compiling with --std=c++11 or higher
+ * Small bit of <type_traits> which cannot be included in NVRTC
  *
- * Author: Jeffrey Bush (@coderforlife)
-*/
+ * Originally by: Jeffrey Bush (@coderforlife)
+ */
 // TODO(leofang): integrate with jitify support (#3408)
+
 #ifndef INCLUDE_GUARD_CUPY_TYPE_TRAITS_CUH
 #define INCLUDE_GUARD_CUPY_TYPE_TRAITS_CUH
 
@@ -21,7 +21,7 @@
 #endif
 
 
-namespace cupy {
+namespace cupy {  // to avoid name clash
 
 template<bool B, class T=void> struct enable_if {};
 template<class T> struct enable_if<true, T> { typedef T type; };
