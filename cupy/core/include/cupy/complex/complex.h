@@ -19,7 +19,8 @@
  */
 
 #pragma once
-#include "../type_traits.cuh"
+#include <cupy/type_traits.cuh>
+
 
 namespace thrust {
 
@@ -36,11 +37,6 @@ struct _select_greater_type_impl<T, U, false> {
 template <typename T, typename U>
 struct _select_greater_type
     : _select_greater_type_impl<T, U, (sizeof(T) > sizeof(U))> {};
-
-namespace detail {
-    using cupy::enable_if;
-    using cupy::is_floating_point;
-}
 
 /*
  *  Calls to the standard math library from inside the thrust namespace
@@ -110,7 +106,7 @@ struct complex {
    */
 
   template <typename U,
-            typename = typename detail::enable_if<detail::is_floating_point<U>::value, U>::type>
+            typename = typename cupy::detail::enable_if<cupy::detail::is_floating_point<U>::value, U>::type>
   inline __host__ __device__ complex(const U& re = U(), const U& im = U());
 
   /* --- Compound Assignment Operators --- */

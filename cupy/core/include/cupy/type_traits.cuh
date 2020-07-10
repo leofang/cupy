@@ -5,8 +5,7 @@
  */
 // TODO(leofang): integrate with jitify support (#3408)
 
-#ifndef INCLUDE_GUARD_CUPY_TYPE_TRAITS_CUH
-#define INCLUDE_GUARD_CUPY_TYPE_TRAITS_CUH
+#pragma once
 
 #if __CUDACC_VER_MAJOR__ >= 9
   #include <cuda_fp16.h>
@@ -20,8 +19,9 @@
 #define CUPY_CPP11_SUPPORTED 0
 #endif
 
-
-namespace cupy {  // to avoid name clash
+// wrap with namespaces to avoid name clash
+namespace cupy {
+namespace detail {
 
 template<bool B, class T=void> struct enable_if {};
 template<class T> struct enable_if<true, T> { typedef T type; };
@@ -54,6 +54,5 @@ struct is_floating_point : public __is_fp<typename remove_cv<T>::type> {};
 template<class T>
 struct is_signed : integral_constant<bool, (T)(-1)<0> {};
 
+}  // namespace detail
 }  // namespace cupy
-
-#endif  // #ifndef INCLUDE_GUARD_CUPY_TYPE_TRAITS_CUH
