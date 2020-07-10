@@ -109,11 +109,6 @@ struct complex {
    *  \param im The imaginary part of the number.
    */
 
-  //template <typename U = typename std::enable_if<std::is_floating_point<U>::value, U>::type>
-  //template <typename U, typename = typename std::enable_if<std::is_floating_point<U>::value, U>::type>
-  //template <typename U>
-  //template <typename U, typename = typename std::enable_if<std::is_floating_point<U>::value>::type>
-  //template <typename U, typename = typename enable_if<true, U>::type>
   template <typename U,
             typename = typename detail::enable_if<detail::is_floating_point<U>::value, U>::type>
   inline __host__ __device__ complex(const U& re = U(), const U& im = U());
