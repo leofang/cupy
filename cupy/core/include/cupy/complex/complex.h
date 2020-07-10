@@ -19,6 +19,7 @@
  */
 
 #pragma once
+#include "../type_traits.cuh"
 
 namespace thrust {
 
@@ -35,6 +36,11 @@ struct _select_greater_type_impl<T, U, false> {
 template <typename T, typename U>
 struct _select_greater_type
     : _select_greater_type_impl<T, U, (sizeof(T) > sizeof(U))> {};
+
+namespace detail {
+    using cupy::enable_if;
+    using cupy::is_floating_point;
+}
 
 /*
  *  Calls to the standard math library from inside the thrust namespace
@@ -91,6 +97,26 @@ struct complex {
    */
   template <typename X>
   inline __host__ __device__ complex(const complex<X>& z);
+
+  /*! Construct a complex number from its real and imaginary parts, possibly
+   * of different types.
+   *
+   * Note: This version of constructors does not exist in Thrust. However, it
+   * is a useful one to comply with NumPy. This is expected only for converting
+   * half to complex<T>, so placed in the last search precedence.
+   *
+   *  \param re The real part of the number.
+   *  \param im The imaginary part of the number.
+   */
+
+  //template <typename U = typename std::enable_if<std::is_floating_point<U>::value, U>::type>
+  //template <typename U, typename = typename std::enable_if<std::is_floating_point<U>::value, U>::type>
+  //template <typename U>
+  //template <typename U, typename = typename std::enable_if<std::is_floating_point<U>::value>::type>
+  //template <typename U, typename = typename enable_if<true, U>::type>
+  template <typename U,
+            typename = typename detail::enable_if<detail::is_floating_point<U>::value, U>::type>
+  inline __host__ __device__ complex(const U& re = U(), const U& im = U());
 
   /* --- Compound Assignment Operators --- */
 

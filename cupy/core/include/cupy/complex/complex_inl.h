@@ -39,6 +39,14 @@ inline __host__ __device__ complex<T>::complex(const complex<X>& z) {
   imag(T(z.imag()));
 }
 
+template <typename T>
+template <typename U, typename>
+inline __host__ __device__ complex<T>::complex(const U& re, const U& im) {
+  // assuming U is convertible to T, ex: half to float
+  real(T(re));
+  imag(T(im));
+}
+
 /* --- Compound Assignment Operators --- */
 // TODO(leofang): support operators with argument of type T, see upstream
 

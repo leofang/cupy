@@ -62,6 +62,16 @@ static_assert(sizeof(_type_reduce) <= 32,
     #define POST_MAP(a)   (${post_map_expr})
 #endif
 
+// // special conversion rule for casting half to complex<double>
+// // without loss of precision (cf. cupy/core/internal.pyx)
+// template<>
+// template<>
+// inline __host__ __device__ complex<double>::complex(
+//     const half& re, const half& im) {
+//   real(float(re));
+//   imag(float(im));
+// }
+
 struct _reduction_op {
     __device__ __forceinline__ _type_reduce operator()(
         const _type_reduce &a, const _type_reduce &b) const {
