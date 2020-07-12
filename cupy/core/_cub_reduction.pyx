@@ -27,8 +27,9 @@ cdef function.Function _create_cub_reduction_function(
     # A (incomplete) list of internal variables:
     # _J            : the index of an element in the array
 
-    # static_assert needs at least C++11 in NVRTC
-    options += ('--std=c++11',)
+    # 1. static_assert needs at least C++11 in NVRTC
+    # 2. turn on fp16 -> complex conversion by defining the macro
+    options += ('--std=c++11', '-DCUPY_CUB_BLOCK_REDUCTION')
 
     # TODO(leofang): try splitting the for-loop into full tiles and partial
     # tiles to utilize LoadDirectBlockedVectorized? See, for example,
@@ -277,14 +278,6 @@ cdef inline tuple _can_use_cub_block_reduction(
     else:
         return None
     if axis_permutes_cub != tuple(range(in_arr.ndim)):
-        return None
-
-    # To support generic reductions, note that some NumPy casting rules
-    # are not applicable in the C++ space (unless we tweak the type
-    # definitions). To circumvent this, we fall back to the old kernel.
-    # TODO(leofang): can we relax this?
-    # cannot cast float16 to complex
-    if in_arr.dtype.char == 'e' and out_arr.dtype.kind == 'c':
         return None
 
     # full-reduction of N-D array: need to invoke the kernel twice

@@ -6,10 +6,8 @@
 // TODO(leofang): integrate with jitify support (#3408)
 
 #pragma once
+#include "float16.cuh"
 
-#if __CUDACC_VER_MAJOR__ >= 9
-  #include <cuda_fp16.h>
-#endif
 
 // _MSVC_LANG is only defined in MSVC 2015U3+.
 #if __cplusplus >= 201103L \
@@ -42,15 +40,21 @@ template<class T, T v> struct integral_constant {
 };
 typedef integral_constant<bool, true> true_type;
 typedef integral_constant<bool, false> false_type;
+
 template<class T> struct __is_fp : public false_type {};
 template<>        struct __is_fp<float> : public true_type {};
 template<>        struct __is_fp<double> : public true_type {};
 template<>        struct __is_fp<long double> : public true_type {};
-#if __CUDACC_VER_MAJOR__ >= 9
-  template<>      struct __is_fp<__half> : public true_type {};
-#endif
+template<>        struct __is_fp<cupy::float16> : public true_type {};
 template<class T>
 struct is_floating_point : public __is_fp<typename remove_cv<T>::type> {};
+
+// a checker for isolating fp16; no counterpart in C++ standard
+template<class T> struct __is_fp16 : public false_type {};
+template<>        struct __is_fp16<cupy::float16> : public true_type {};
+template<class T>
+struct is_fp16 : public __is_fp16<typename remove_cv<T>::type> {};
+
 template<class T>
 struct is_signed : integral_constant<bool, (T)(-1)<0> {};
 

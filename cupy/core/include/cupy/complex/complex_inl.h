@@ -39,13 +39,13 @@ inline __host__ __device__ complex<T>::complex(const complex<X>& z) {
   imag(T(z.imag()));
 }
 
-#ifdef CUPY_CUB_BLOCK_REDUCTION  // currently a no-op
+#ifdef CUPY_CUB_BLOCK_REDUCTION
 template <typename T>
 template <typename U, typename>
-inline __host__ __device__ complex<T>::complex(const U& re, const U& im) {
-  // assuming U is convertible to T, ex: half to float
-  real(T(re));
-  imag(T(im));
+inline __host__ __device__ complex<T>::complex(const U& u) {
+  // U = float16 (not __half!)
+  real(T(u));
+  imag(T(0));
 }
 #endif
 

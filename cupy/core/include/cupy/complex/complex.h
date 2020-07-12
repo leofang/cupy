@@ -19,7 +19,7 @@
  */
 
 #pragma once
-#ifdef CUPY_CUB_BLOCK_REDUCTION  // currently a no-op
+#ifdef CUPY_CUB_BLOCK_REDUCTION
 #include <cupy/type_traits.cuh>
 #endif
 
@@ -96,21 +96,20 @@ struct complex {
   template <typename X>
   inline __host__ __device__ complex(const complex<X>& z);
 
-#ifdef CUPY_CUB_BLOCK_REDUCTION  // currently a no-op
-  /*! Construct a complex number from its real and imaginary parts, possibly
-   *  of different types.
+#ifdef CUPY_CUB_BLOCK_REDUCTION
+  /*! Construct a complex number from CuPy's float16 wrapper type.
    *
    *  Note: This constructor version does not exist in Thrust. However, it is
-   *  a useful one to comply with NumPy. This is expected only for converting
-   *  half to complex<T>, so placed in the last search precedence.
+   *  a handy one to comply with NumPy. Currently only CUB block reduction
+   *  kernels use this constructor, and other times this is disabled by unsetting
+   *  the CUPY_CUB_BLOCK_REDUCTION macro.
    *
-   *  \param re The real part of the number.
-   *  \param im The imaginary part of the number.
+   *  \param re A float16 (not __half!) number.
    */
 
   template <typename U,
-            typename = typename cupy::detail::enable_if<cupy::detail::is_floating_point<U>::value, U>::type>
-  inline __host__ __device__ complex(const U& re = U(), const U& im = U());
+            typename = typename cupy::detail::enable_if<cupy::detail::is_fp16<U>::value, U>::type>
+  inline __host__ __device__ complex(const U& u);
 #endif
 
   /* --- Compound Assignment Operators --- */
