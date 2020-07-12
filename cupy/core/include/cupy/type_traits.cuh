@@ -45,13 +45,13 @@ template<class T> struct __is_fp : public false_type {};
 template<>        struct __is_fp<float> : public true_type {};
 template<>        struct __is_fp<double> : public true_type {};
 template<>        struct __is_fp<long double> : public true_type {};
-template<>        struct __is_fp<cupy::float16> : public true_type {};
+template<>        struct __is_fp<float16> : public true_type {};
 template<class T>
 struct is_floating_point : public __is_fp<typename remove_cv<T>::type> {};
 
 // a checker for isolating fp16; no counterpart in C++ standard
 template<class T> struct __is_fp16 : public false_type {};
-template<>        struct __is_fp16<cupy::float16> : public true_type {};
+template<>        struct __is_fp16<float16> : public true_type {};
 template<class T>
 struct is_fp16 : public __is_fp16<typename remove_cv<T>::type> {};
 

@@ -5,9 +5,6 @@
 #define M_PI 3.1415926535897932384626433832795
 #endif
 
-#include <cupy/float16.cuh>
-using namespace cupy;
-
 // CArray
 #define CUPY_FOR(i, n) \
     for (ptrdiff_t i = \

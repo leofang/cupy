@@ -41,7 +41,6 @@ public:
 
 #endif  // #if __CUDACC_VER_MAJOR__ >= 9
 
-namespace cupy {
 
 class float16 {
 private:
@@ -167,5 +166,3 @@ __device__ int isnan(float16 x) {return x.isnan();}
 __device__ int isinf(float16 x) {return x.isinf();}
 __device__ int isfinite(float16 x) {return x.isfinite();}
 __device__ int signbit(float16 x) {return x.signbit();}
-
-}  // namespace cupy
