@@ -6,7 +6,7 @@
 // TODO(leofang): integrate with jitify support (#3408)
 
 #pragma once
-#include "float16.cuh"
+#include <cupy/float16.cuh>
 
 
 // _MSVC_LANG is only defined in MSVC 2015U3+.
