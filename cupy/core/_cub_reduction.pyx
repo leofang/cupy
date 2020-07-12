@@ -366,13 +366,13 @@ cdef _scalar.CScalar _cub_convert_to_c_scalar(
         return _scalar.CScalar.from_int32(value)
 
 
-cdef inline _cub_two_pass_launch(
+cdef inline void _cub_two_pass_launch(
         str name, Py_ssize_t block_size, Py_ssize_t segment_size,
         Py_ssize_t items_per_thread, str reduce_type, tuple params,
         list in_args, list out_args,
         str identity, str pre_map_expr, str reduce_expr, str post_map_expr,
         _kernel._TypeMap type_map, str input_expr, str output_expr,
-        str preamble, tuple options, stream):
+        str preamble, tuple options, stream) except *:
     '''
     Notes:
     1. Two-pass reduction: the first pass distributes an even share over
@@ -468,11 +468,11 @@ cdef inline _cub_two_pass_launch(
     func.linear_launch(gridx, inout_args, 0, blockx, stream)
 
 
-cdef inline _launch_cub(
+cdef inline void _launch_cub(
         self, out_block_num, block_size, block_stride,
         in_args, out_args, in_shape, out_shape, type_map,
         map_expr, reduce_expr, post_map_expr, reduce_type,
-        stream, params, cub_params):
+        stream, params, cub_params) except *:
     cdef bint full_reduction
     cdef Py_ssize_t contiguous_size, items_per_thread
     cdef function.Function func
@@ -558,7 +558,7 @@ cdef bint _try_to_call_cub_reduction(
         stream, optimize_context, tuple key,
         map_expr, reduce_expr, post_map_expr, reduce_type, type_map,
         tuple reduce_axis, tuple out_axis, const shape_t& out_shape,
-        ndarray ret):
+        ndarray ret) except *:
     """Try to use cub.
 
     Updates `ret` and returns a boolean value whether cub is used.
