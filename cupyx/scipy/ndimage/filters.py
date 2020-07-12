@@ -1205,7 +1205,7 @@ def _generate_boundary_condition_ops(mode, ix, xsize):
 
 _CAST_FUNCTION = """
 #include <cupy/type_traits.cuh>
-using namespace cupy;
+using namespace cupy::detail;
 
 // Implements a casting function to make it compatible with scipy
 // Use like cast<to_type>(value)

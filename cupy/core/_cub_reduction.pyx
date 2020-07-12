@@ -279,6 +279,14 @@ cdef inline tuple _can_use_cub_block_reduction(
     if axis_permutes_cub != tuple(range(in_arr.ndim)):
         return None
 
+    # To support generic reductions, note that some NumPy casting rules
+    # are not applicable in the C++ space (unless we tweak the type
+    # definitions). To circumvent this, we fall back to the old kernel.
+    # TODO(leofang): can we relax this?
+    # cannot cast float16 to complex
+    if in_arr.dtype.char == 'e' and out_arr.dtype.kind == 'c':
+        return None
+
     # full-reduction of N-D array: need to invoke the kernel twice
     cdef bint full_reduction = True if len(out_axis) == 0 else False
 

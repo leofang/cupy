@@ -19,7 +19,9 @@
  */
 
 #pragma once
+#ifdef CUPY_CUB_BLOCK_REDUCTION  // currently a no-op
 #include <cupy/type_traits.cuh>
+#endif
 
 
 namespace thrust {
@@ -94,6 +96,7 @@ struct complex {
   template <typename X>
   inline __host__ __device__ complex(const complex<X>& z);
 
+#ifdef CUPY_CUB_BLOCK_REDUCTION  // currently a no-op
   /*! Construct a complex number from its real and imaginary parts, possibly
    *  of different types.
    *
@@ -108,6 +111,7 @@ struct complex {
   template <typename U,
             typename = typename cupy::detail::enable_if<cupy::detail::is_floating_point<U>::value, U>::type>
   inline __host__ __device__ complex(const U& re = U(), const U& im = U());
+#endif
 
   /* --- Compound Assignment Operators --- */
 
