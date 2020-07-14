@@ -39,16 +39,6 @@ inline __host__ __device__ complex<T>::complex(const complex<X>& z) {
   imag(T(z.imag()));
 }
 
-#ifdef CUPY_CUB_BLOCK_REDUCTION
-template <typename T>
-template <typename U, typename>
-inline __host__ __device__ complex<T>::complex(const U& u) {
-  // U = float16 (not __half!)
-  real(T(u));
-  imag(T(0));
-}
-#endif
-
 /* --- Compound Assignment Operators --- */
 // TODO(leofang): support operators with argument of type T, see upstream
 
