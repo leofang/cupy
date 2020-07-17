@@ -128,8 +128,6 @@ package_data = {
         'core/include/cupy/atomics.cuh',
         'core/include/cupy/type_dispatcher.cuh',
         'core/include/cupy/cuComplex_bridge.h',
-        'core/include/cupy/float16.cuh',
-        'core/include/cupy/type_traits.cuh',
         'core/include/cupy/_cuda/cuda-*/*.h',
         'core/include/cupy/_cuda/cuda-*/*.hpp',
         'cuda/cupy_thrust.cu',

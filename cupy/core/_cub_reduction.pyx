@@ -27,9 +27,8 @@ cdef function.Function _create_cub_reduction_function(
     # A (incomplete) list of internal variables:
     # _J            : the index of an element in the array
 
-    # 1. static_assert needs at least C++11 in NVRTC
-    # 2. turn on fp16 -> complex conversion by defining the macro
-    options += ('--std=c++11', '-DCUPY_CUB_BLOCK_REDUCTION')
+    # static_assert needs at least C++11 in NVRTC
+    options += ('--std=c++11',)
 
     # TODO(leofang): try splitting the for-loop into full tiles and partial
     # tiles to utilize LoadDirectBlockedVectorized? See, for example,
