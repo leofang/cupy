@@ -97,7 +97,7 @@ struct complex {
    *
    *  \param z The \p complex to copy from.
    */
-  __host__ __device__ complex(const complex<T>& z);
+  inline __host__ __device__ complex(const complex<T>& z);
 
   /*! This copy constructor copies from a \p complex with a type that
    *  is convertible to this \p complex \c value_type.
