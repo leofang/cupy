@@ -62,9 +62,9 @@ public:
   explicit __device__ float16(const __half_raw &v): data_(v) {}
 
   __device__ operator float() const {return float(data_);}
-  __device__ operator complex<float>() const {
-      return complex<float>(float(data_), 0);
-  }
+  //__device__ operator complex<float>() const {
+  //    return complex<float>(float(data_), 0);
+  //}
 
   static const unsigned short nan = 0x7e00u;
 

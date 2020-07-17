@@ -4,13 +4,13 @@ from cupy.core._kernel import create_ufunc
 _complex_cast_copy = '''
 template<typename T, typename U>
 __device__ void cast_copy(const U& x, T& y) {y = T(x);}
-template<>
-__device__ void cast_copy(const float16& x, complex<float>& y) {
-    // explicitly use user-defined type conversion functions instead of
-    // implicit conversions to avoid any potential issue of multiple
-    // candidates available
-    y = x.operator complex<float>();
-}
+//template<>
+//__device__ void cast_copy(const float16& x, complex<float>& y) {
+//    // explicitly use user-defined type conversion functions instead of
+//    // implicit conversions to avoid any potential issue of multiple
+//    // candidates available
+//    y = x.operator complex<float>();
+//}
 template<typename T, typename U>
 __device__ void cast_copy(const complex<U>& x, complex<T>& y) {
     y = complex<T>(x);

@@ -75,12 +75,18 @@ struct complex {
 
   /* --- Constructors --- */
 
+  /*! Construct a complex number from a real number.
+   *
+   *  \param re The real number.
+   */
+  inline __host__ __device__ complex(const T& re = T());
+
   /*! Construct a complex number from its real and imaginary parts.
    *
    *  \param re The real part of the number.
    *  \param im The imaginary part of the number.
    */
-  inline __host__ __device__ complex(const T& re = T(), const T& im = T());
+  inline __host__ __device__ complex(const T& re, const T& im);
 
   /*! This copy constructor copies from a \p complex with a type that
    *  is convertible to this \p complex \c value_type.

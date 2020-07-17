@@ -25,6 +25,12 @@ namespace thrust {
 // TODO(leofang): support more kinds of constructors from upstream
 
 template <typename T>
+inline __host__ __device__ complex<T>::complex(const T& re) {
+  real(re);
+  imag(T());
+}
+
+template <typename T>
 inline __host__ __device__ complex<T>::complex(const T& re, const T& im) {
   real(re);
   imag(im);
