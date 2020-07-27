@@ -10,7 +10,7 @@ except ImportError:
     scipy_available = False
 
 import cupy
-from cupy.core import _accelerator
+from cupy import core
 from cupy import testing
 from cupyx.scipy import sparse
 
@@ -1722,11 +1722,11 @@ class TestCsrMatrixGetitem2(unittest.TestCase):
 class TestCubSpmv(unittest.TestCase):
 
     def setUp(self):
-        self.old_accelerators = _accelerator.get_routine_accelerators()
-        _accelerator.set_routine_accelerators(['cub'])
+        self.old_accelerators = core.get_routine_accelerators()
+        core.set_routine_accelerators(['cub'])
 
     def tearDown(self):
-        _accelerator.set_routine_accelerators(self.old_accelerators)
+        core.set_routine_accelerators(self.old_accelerators)
 
     @property
     def make(self):

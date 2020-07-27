@@ -4,8 +4,8 @@ import sys
 
 import cupy
 from cupy import _environment
+from cupy import core
 from cupy import testing
-from cupy.core import _accelerator
 from cupy.core import _cub_reduction
 from cupy.cuda import memory
 
@@ -24,11 +24,11 @@ class CubReductionTestBase(unittest.TestCase):
     def setUp(self):
         self.can_use = cupy.core._cub_reduction._can_use_cub_block_reduction
 
-        self.old_accelerators = _accelerator.get_reduction_accelerators()
-        _accelerator.set_reduction_accelerators(['cub'])
+        self.old_accelerators = core.get_reduction_accelerators()
+        core.set_reduction_accelerators(['cub'])
 
     def tearDown(self):
-        _accelerator.set_reduction_accelerators(self.old_accelerators)
+        core.set_reduction_accelerators(self.old_accelerators)
 
     def _test_can_use(
             self, i_shape, o_shape, r_axis, o_axis, order, expected):
@@ -126,8 +126,8 @@ class TestSimpleCubReductionKernelMisc(CubReductionTestBase):
 
     def test_can_use_accelerator_set_unset(self):
         # ensure we use CUB block reduction and not CUB device reduction
-        old_routine_accelerators = _accelerator.get_routine_accelerators()
-        _accelerator.set_routine_accelerators([])
+        old_routine_accelerators = core.get_routine_accelerators()
+        core.set_routine_accelerators([])
 
         a = cupy.random.random((10, 10))
         # this is the only function we can mock; the rest is cdef'd
@@ -144,4 +144,4 @@ class TestSimpleCubReductionKernelMisc(CubReductionTestBase):
                 func_name, wraps=func, times_called=0):  # not used
             a.sum(axis=0)
 
-        _accelerator.set_routine_accelerators(old_routine_accelerators)
+        core.set_routine_accelerators(old_routine_accelerators)

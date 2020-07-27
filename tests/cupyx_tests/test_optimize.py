@@ -5,8 +5,8 @@ from unittest import mock
 import pytest
 
 import cupy
+from cupy import core
 from cupy import testing
-from cupy.core import _accelerator
 
 
 try:
@@ -134,18 +134,18 @@ class TestOptimizeBackends(unittest.TestCase):
 
     def setUp(self):
         cupy.core._optimize_config._clear_all_contexts_cache()
-        self.old_reductions = _accelerator.get_reduction_accelerators()
-        _accelerator.set_reduction_accelerators(self.backend)
+        self.old_reductions = core.get_reduction_accelerators()
+        core.set_reduction_accelerators(self.backend)
 
         # avoid shadowed by the cub module
-        self.old_routines = _accelerator.get_routine_accelerators()
-        _accelerator.set_routine_accelerators([])
+        self.old_routines = core.get_routine_accelerators()
+        core.set_routine_accelerators([])
 
         self.x = testing.shaped_arange((3, 4), cupy, dtype=cupy.float32)
 
     def tearDown(self):
-        _accelerator.set_routine_accelerators(self.old_routines)
-        _accelerator.set_reduction_accelerators(self.old_reductions)
+        core.set_routine_accelerators(self.old_routines)
+        core.set_reduction_accelerators(self.old_reductions)
 
     def test_optimize1(self):
         # Ensure the optimizer is run 3 times for all backends.

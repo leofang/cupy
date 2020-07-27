@@ -4,7 +4,7 @@ import numpy
 import pytest
 
 import cupy
-from cupy.core import _accelerator
+from cupy import core
 from cupy import testing
 
 
@@ -171,11 +171,11 @@ class TestSearch(unittest.TestCase):
 class TestCubReduction(unittest.TestCase):
 
     def setUp(self):
-        self.old_accelerators = _accelerator.get_routine_accelerators()
-        _accelerator.set_routine_accelerators(['cub'])
+        self.old_accelerators = core.get_routine_accelerators()
+        core.set_routine_accelerators(['cub'])
 
     def tearDown(self):
-        _accelerator.set_routine_accelerators(self.old_accelerators)
+        core.set_routine_accelerators(self.old_accelerators)
 
     @testing.for_dtypes('bhilBHILefdFD')
     @testing.numpy_cupy_allclose(rtol=1E-5)
