@@ -868,6 +868,10 @@ cdef class ndarray:
            :func:`cupy.sum` for full documentation,
            :meth:`numpy.ndarray.sum`
 
+        .. note::
+           this function could be accelerated by cub if
+           ``cupy_accelerators="cub"`` is set.
+
         """
         return _math._ndarray_sum(self, axis, dtype, out, keepdims)
 
@@ -877,6 +881,10 @@ cdef class ndarray:
         .. seealso::
            :func:`cupy.cumsum` for full documentation,
            :meth:`numpy.ndarray.cumsum`
+
+        .. note::
+           This function could be accelerated by CUB if
+           ``CUPY_ACCELERATORS="cub"`` is set.
 
         """
         return _math._ndarray_cumsum(self, axis, dtype, out)
@@ -921,6 +929,10 @@ cdef class ndarray:
            :func:`cupy.prod` for full documentation,
            :meth:`numpy.ndarray.prod`
 
+        .. note::
+           This function could be accelerated by CUB if
+           ``CUPY_ACCELERATORS="cub"`` is set.
+
         """
         return _math._ndarray_prod(self, axis, dtype, out, keepdims)
 
@@ -930,6 +942,10 @@ cdef class ndarray:
         .. seealso::
            :func:`cupy.cumprod` for full documentation,
            :meth:`numpy.ndarray.cumprod`
+
+        .. note::
+           This function could be accelerated by CUB if
+           ``CUPY_ACCELERATORS="cub"`` is set.
 
         """
         return _math._ndarray_cumprod(self, axis, dtype, out)
