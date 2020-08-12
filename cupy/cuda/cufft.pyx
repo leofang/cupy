@@ -108,6 +108,14 @@ cdef extern from 'cupy_cufft.h' nogil:
                                     XtArray* odata, int direction)
     Result cufftXtExecDescriptorZ2Z(Handle plan, XtArray* idata,
                                     XtArray* odata, int direction)
+    Result cufftXtExecDescriptorC2R(Handle plan, XtArray* idata,
+                                    XtArray* odata)
+    Result cufftXtExecDescriptorZ2D(Handle plan, XtArray* idata,
+                                    XtArray* odata)
+    Result cufftXtExecDescriptorR2C(Handle plan, XtArray* idata,
+                                    XtArray* odata)
+    Result cufftXtExecDescriptorD2Z(Handle plan, XtArray* idata,
+                                    XtArray* odata)
 
 
 cdef dict RESULT = {
@@ -325,9 +333,6 @@ class Plan1d(object):
         cdef vector.vector[void*] work_area_ptr
 
         # some sanity checks
-        if fft_type != CUFFT_C2C and fft_type != CUFFT_Z2Z:
-            raise ValueError('Currently for multiple GPUs only C2C and Z2Z are'
-                             ' supported.')
         if isinstance(devices, list):
             nGPUs = len(devices)
             for i in range(nGPUs):
@@ -339,6 +344,9 @@ class Plan1d(object):
         else:
             raise ValueError('\"devices\" should be an int or a list of int.')
         if batch == 1:
+            if fft_type in (CUFFT_C2R, CUFFT_R2C, CUFFT_Z2D, CUFFT_D2Z):
+                raise ValueError('For multi-GPU FFT with batch = 1, only C2C '
+                                 'and Z2Z are supported')
             if (nx & (nx - 1)) != 0:
                 raise ValueError('For multi-GPU FFT with batch = 1, the array '
                                  'size must be a power of 2.')
@@ -477,7 +485,7 @@ class Plan1d(object):
         cdef XtArray* xtArr
         cdef intptr_t ptr
         cdef list xtArr_buffer, share, sizes
-        cdef int i, nGPUs, count
+        cdef int i, nGPUs, count, size_per_batch
         cdef XtSubFormat fmt
 
         # First, get the buffers:
@@ -496,7 +504,13 @@ class Plan1d(object):
                         share[i] += 1
                 else:
                     share = [1.0 / nGPUs] * nGPUs
-                sizes = [int(share[i] * self.nx * a.dtype.itemsize)
+                if self.fft_type in (CUFFT_R2C, CUFFT_D2Z):
+                    size_per_batch = self.nx + 2
+                elif self.fft_type in (CUFFT_C2R, CUFFT_Z2D):
+                    size_per_batch = self.nx // 2 + 1
+                else:  # C2C & Z2Z
+                    size_per_batch = self.nx
+                sizes = [int(share[i] * size_per_batch * a.dtype.itemsize)
                          for i in range(nGPUs)]
 
                 # get buffer
@@ -539,7 +553,7 @@ class Plan1d(object):
     def _multi_gpu_memcpy(self, a, str action):
         cdef Handle plan = self.plan
         cdef list xtArr_buffer, share
-        cdef int nGPUs, dev, s_device, start, count, result
+        cdef int nGPUs, dev, s_device, start, count, result, in_size, out_size
         cdef XtArray* arr
         cdef intptr_t ptr, ptr2
         cdef size_t size
@@ -557,6 +571,16 @@ class Plan1d(object):
         nGPUs = len(self.gpus)
         share = self.batch_share
 
+        if self.fft_type in (CUFFT_R2C, CUFFT_D2Z):
+            in_size = self.nx
+            out_size = self.nx // 2 + 1
+        elif self.fft_type in (CUFFT_C2R, CUFFT_Z2D):
+            in_size = self.nx // 2 + 1
+            out_size = self.nx
+        else:  # C2C & Z2Z
+            in_size = self.nx
+            out_size = self.nx
+
         if action == 'scatter':
             if isinstance(a, cupy.ndarray):
                 s_device = b.data.device_id
@@ -569,7 +593,7 @@ class Plan1d(object):
                 outer_stream.synchronize()
 
                 for dev in range(nGPUs):
-                    count = int(share[dev] * self.nx)
+                    count = int(share[dev] * in_size)
                     size = count * b.dtype.itemsize
                     curr_stream = self.scatter_streams[s_device][dev]
                     curr_event = self.scatter_events[s_device][dev]
@@ -600,7 +624,7 @@ class Plan1d(object):
                 outer_stream.synchronize()
 
                 for i in range(nGPUs):
-                    count = int(share[i] * self.nx)
+                    count = int(share[i] * out_size)
                     size = count * b.dtype.itemsize
                     curr_stream = self.gather_streams[i]
                     curr_event = self.gather_events[i]
@@ -635,8 +659,16 @@ class Plan1d(object):
         # Note: mult-GPU plans cannot set stream
         if self.fft_type == CUFFT_C2C:
             multi_gpu_execC2C(self.plan, self.xtArr, self.xtArr, direction)
+        elif self.fft_type == CUFFT_R2C:
+            multi_gpu_execR2C(self.plan, self.xtArr, self.xtArr)
+        elif self.fft_type == CUFFT_C2R:
+            multi_gpu_execC2R(self.plan, self.xtArr, self.xtArr)
         elif self.fft_type == CUFFT_Z2Z:
             multi_gpu_execZ2Z(self.plan, self.xtArr, self.xtArr, direction)
+        elif self.fft_type == CUFFT_D2Z:
+            multi_gpu_execD2Z(self.plan, self.xtArr, self.xtArr)
+        elif self.fft_type == CUFFT_Z2D:
+            multi_gpu_execZ2D(self.plan, self.xtArr, self.xtArr)
         else:
             raise ValueError
 
@@ -900,4 +932,30 @@ cpdef multi_gpu_execZ2Z(Handle plan, intptr_t idata, intptr_t odata,
     with nogil:
         result = cufftXtExecDescriptorZ2Z(plan, <XtArray*>idata,
                                           <XtArray*>odata, direction)
+    check_result(result)
+
+cpdef multi_gpu_execC2R(Handle plan, intptr_t idata, intptr_t odata):
+    with nogil:
+        result = cufftXtExecDescriptorC2R(plan, <XtArray*>idata,
+                                          <XtArray*>odata)
+    check_result(result)
+
+
+cpdef multi_gpu_execZ2D(Handle plan, intptr_t idata, intptr_t odata):
+    with nogil:
+        result = cufftXtExecDescriptorZ2D(plan, <XtArray*>idata,
+                                          <XtArray*>odata)
+    check_result(result)
+
+cpdef multi_gpu_execR2C(Handle plan, intptr_t idata, intptr_t odata):
+    with nogil:
+        result = cufftXtExecDescriptorR2C(plan, <XtArray*>idata,
+                                          <XtArray*>odata)
+    check_result(result)
+
+
+cpdef multi_gpu_execD2Z(Handle plan, intptr_t idata, intptr_t odata):
+    with nogil:
+        result = cufftXtExecDescriptorD2Z(plan, <XtArray*>idata,
+                                          <XtArray*>odata)
     check_result(result)
