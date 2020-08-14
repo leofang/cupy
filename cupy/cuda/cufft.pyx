@@ -450,7 +450,7 @@ class Plan1d(object):
     def __exit__(self, exc_type, exc_value, traceback):
         _thread_local._current_plan = None
 
-    def fft(self, a, out, direction):
+    def fft(self, a, out, direction=None):
         if self._use_multi_gpus:
             self._multi_gpu_fft(a, out, direction)
         else:
@@ -504,12 +504,16 @@ class Plan1d(object):
                         share[i] += 1
                 else:
                     share = [1.0 / nGPUs] * nGPUs
+
+                # the buffer should be large enough to hold the largest array
+                # (input or output)
                 if self.fft_type in (CUFFT_R2C, CUFFT_D2Z):
                     size_per_batch = self.nx + 2
                 elif self.fft_type in (CUFFT_C2R, CUFFT_Z2D):
                     size_per_batch = self.nx // 2 + 1
                 else:  # C2C & Z2Z
                     size_per_batch = self.nx
+
                 sizes = [int(share[i] * size_per_batch * a.dtype.itemsize)
                          for i in range(nGPUs)]
 
