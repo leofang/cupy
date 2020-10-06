@@ -1,13 +1,7 @@
 // This file is a stub header file of cuda for Read the Docs.
 
-#ifndef INCLUDE_GUARD_CUDA_CUPY_COMPLEX_H
-#define INCLUDE_GUARD_CUDA_CUPY_COMPLEX_H
-
-#if !defined(CUPY_NO_CUDA) && !defined(CUPY_USE_HIP)
-
-#include <cuComplex.h>
-
-#else // #if !defined(CUPY_NO_CUDA) || !defined(CUPY_USE_HIP)
+#ifndef INCLUDE_GUARD_CUPY_HIP_COMPLEX_H
+#define INCLUDE_GUARD_CUPY_HIP_COMPLEX_H
 
 extern "C" {
 
@@ -26,4 +20,4 @@ struct cuDoubleComplex{
 } // extern "C"
 
 #endif // #ifndef CUPY_NO_CUDA
-#endif // #ifndef INCLUDE_GUARD_CUDA_CUPY_COMPLEX_H
+#endif // #ifndef INCLUDE_GUARD_HIP_CUPY_COMPLEX_H
