@@ -1,5 +1,5 @@
-#ifndef INCLUDE_GUARD_HIP_CUPY_HIPSOLVER_H
-#define INCLUDE_GUARD_HIP_CUPY_HIPSOLVER_H
+#ifndef INCLUDE_GUARD_HIP_CUPY_ROCSOLVER_H
+#define INCLUDE_GUARD_HIP_CUPY_ROCSOLVER_H
 
 #include "cupy_cuda.h"
 #include "cupy_hipblas.h"
@@ -1037,4 +1037,4 @@ cusolverStatus_t cusolverSpZcsreigvsi(...) {
 
 } // extern "C" 
 
-#endif // #ifdef INCLUDE_GUARD_HIP_CUPY_HIPSOLVER_H
+#endif // #ifdef INCLUDE_GUARD_HIP_CUPY_ROCSOLVER_H
