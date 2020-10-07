@@ -1,6 +1,0 @@
-#ifndef INCLUDE_GUARD_CUDA_CUPY_CURAND_H
-#define INCLUDE_GUARD_CUDA_CUPY_CURAND_H
-
-#include <curand.h>
-
-#endif // #ifndef INCLUDE_GUARD_CUDA_CUPY_CURAND_H

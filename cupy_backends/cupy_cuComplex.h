@@ -7,7 +7,7 @@
 
 #elif !defined(CUPY_NO_CUDA)
 
-#include "cuda/cupy_cuComplex.h"
+#include <cuComplex.h>
 
 #else // #if !defined(CUPY_NO_CUDA) || !defined(CUPY_USE_HIP)
 
