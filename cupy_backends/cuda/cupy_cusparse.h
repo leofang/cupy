@@ -113,6 +113,58 @@ cusparseStatus_t cusparseZgtsv2StridedBatch(...) {
 
 #if CUSPARSE_VERSION < 9020
 // Functions added in CUDA 9.2
+typedef void* csrsm2Info_t;
+
+cusparseStatus_t cusparseCreateCsrsm2Info(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseDestroyCsrsm2Info(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseScsrsm2_bufferSizeExt(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseDcsrsm2_bufferSizeExt(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseCcsrsm2_bufferSizeExt(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseZcsrsm2_bufferSizeExt(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseScsrsm2_analysis(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseDcsrsm2_analysis(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseCcsrsm2_analysis(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseZcsrsm2_analysis(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseScsrsm2_solve(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseDcsrsm2_solve(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseCcsrsm2_solve(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseZcsrsm2_solve(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseXcsrsm2_zeroPivot(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
 cusparseStatus_t cusparseSgtsvInterleavedBatch_bufferSizeExt(...) {
   return CUSPARSE_STATUS_SUCCESS;
 }
