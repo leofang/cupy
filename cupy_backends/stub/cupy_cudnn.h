@@ -3,8 +3,7 @@
 #ifndef INCLUDE_GUARD_STUB_CUPY_CUDNN_H
 #define INCLUDE_GUARD_STUB_CUPY_CUDNN_H
 
-
-#include "../cupy_cuda_common.h"
+#include "cupy_cuda_common.h"
 
 #define CUDNN_VERSION 0
 

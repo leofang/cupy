@@ -1,12 +1,17 @@
 #ifndef INCLUDE_GUARD_CUPY_CUTENSOR_H
 #define INCLUDE_GUARD_CUPY_CUTENSOR_H
 
-#ifndef CUPY_NO_CUDA
+#ifdef CUPY_USE_HIP
 
-#include <library_types.h>
-#include <cutensor.h>
+// Since ROCm/HIP does not have cuTENSOR, we simply include the stubs here
+// to avoid code dup.
+#include "stub/cupy_cutensor.h"
 
-#else // #ifndef CUPY_NO_CUDA
+#elif !defined(CUPY_NO_CUDA)
+
+#include "cuda/cupy_cutensor.h"
+
+#else
 
 #include "stub/cupy_cutensor.h"
 
