@@ -15,7 +15,7 @@ from cupy.core.core cimport ndarray
 from cupy.cuda import cub
 
 if cupy.cuda.cutensor.available:
-    import cupy_backends.cuda.libs.cutensor as cuda_cutensor
+    import cupy_backends.libs.cutensor as cuda_cutensor
     from cupy import cutensor
 else:
     cuda_cutensor = None

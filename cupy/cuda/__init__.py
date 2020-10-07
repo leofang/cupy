@@ -11,14 +11,14 @@ from cupy.cuda import memory_hooks  # NOQA
 from cupy.cuda import pinned_memory  # NOQA
 from cupy.cuda import stream  # NOQA
 from cupy.cuda import texture  # NOQA
-from cupy_backends.cuda.api import driver  # NOQA
-from cupy_backends.cuda.api import runtime  # NOQA
-from cupy_backends.cuda.libs import cublas  # NOQA
-from cupy_backends.cuda.libs import curand  # NOQA
-from cupy_backends.cuda.libs import cusolver  # NOQA
-from cupy_backends.cuda.libs import cusparse  # NOQA
-from cupy_backends.cuda.libs import nvrtc  # NOQA
-from cupy_backends.cuda.libs import profiler  # NOQA
+from cupy_backends.api import driver  # NOQA
+from cupy_backends.api import runtime  # NOQA
+from cupy_backends.libs import cublas  # NOQA
+from cupy_backends.libs import curand  # NOQA
+from cupy_backends.libs import cusolver  # NOQA
+from cupy_backends.libs import cusparse  # NOQA
+from cupy_backends.libs import nvrtc  # NOQA
+from cupy_backends.libs import profiler  # NOQA
 
 
 _available = None
@@ -49,7 +49,7 @@ except ImportError:
     nccl = _UnavailableModule('cupy.cuda.nccl')
 
 try:
-    from cupy_backends.cuda.libs import cutensor
+    from cupy_backends.libs import cutensor
 except ImportError:
     cutensor = _UnavailableModule('cupy.cuda.cutensor')
 

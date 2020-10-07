@@ -1,7 +1,7 @@
 cimport cython  # NOQA
 import numpy
 
-from cupy_backends.cuda.api cimport runtime
+from cupy_backends.api cimport runtime
 
 
 all_type_chars = '?bhilqBHILQefdFD'

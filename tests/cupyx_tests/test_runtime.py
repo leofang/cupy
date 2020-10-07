@@ -26,21 +26,21 @@ class TestRuntime(unittest.TestCase):
         assert 'Error' not in str(runtime)
 
         with mock.patch(
-                'cupy_backends.cuda.api.runtime.driverGetVersion',
+                'cupy_backends.api.runtime.driverGetVersion',
                 side_effect=_get_error_func(
                     cupy.cuda.runtime.CUDARuntimeError, 0)):
             runtime = cupyx.get_runtime_info()
             assert 'CUDARuntimeError' in str(runtime)
 
         with mock.patch(
-                'cupy_backends.cuda.api.runtime.runtimeGetVersion',
+                'cupy_backends.api.runtime.runtimeGetVersion',
                 side_effect=_get_error_func(
                     cupy.cuda.runtime.CUDARuntimeError, 0)):
             runtime = cupyx.get_runtime_info()
             assert 'CUDARuntimeError' in str(runtime)
 
         with mock.patch(
-                'cupy_backends.cuda.libs.cudnn.getVersion',
+                'cupy_backends.libs.cudnn.getVersion',
                 side_effect=_get_error_func(cudnn.CuDNNError, 0)):
             runtime = cupyx.get_runtime_info()
             assert 'CuDNNError' in str(runtime)

@@ -39,14 +39,14 @@ use_hip = bool(int(os.environ.get('CUPY_INSTALL_USE_HIP', '0')))
 MODULES = []
 
 cuda_files = [
-    'cupy_backends.cuda.api.driver',
-    'cupy_backends.cuda.api.runtime',
-    'cupy_backends.cuda.libs.cublas',
-    'cupy_backends.cuda.libs.curand',
-    'cupy_backends.cuda.libs.cusparse',
-    'cupy_backends.cuda.libs.nvrtc',
-    'cupy_backends.cuda.libs.profiler',
-    'cupy_backends.cuda.stream',
+    'cupy_backends.api.driver',
+    'cupy_backends.api.runtime',
+    'cupy_backends.libs.cublas',
+    'cupy_backends.libs.curand',
+    'cupy_backends.libs.cusparse',
+    'cupy_backends.libs.nvrtc',
+    'cupy_backends.libs.profiler',
+    'cupy_backends.stream',
     'cupy.core._accelerator',
     'cupy.core._carray',
     'cupy.core._cub_reduction',
@@ -98,7 +98,7 @@ if use_hip:
         'name': 'cuda',
         'file': cuda_files + [
             'cupy.cuda.nvtx',
-            'cupy_backends.cuda.libs.cusolver',
+            'cupy_backends.libs.cusolver',
         ],
         'include': [
             'hip/hip_runtime_api.h',
@@ -151,7 +151,7 @@ if not use_hip:
     MODULES.append({
         'name': 'cusolver',
         'file': [
-            'cupy_backends.cuda.libs.cusolver',
+            'cupy_backends.libs.cusolver',
         ],
         'include': [
             'cusolverDn.h',
@@ -166,7 +166,7 @@ if not use_hip:
     MODULES.append({
         'name': 'cudnn',
         'file': [
-            'cupy_backends.cuda.libs.cudnn',
+            'cupy_backends.libs.cudnn',
             'cupy.cudnn',
         ],
         'include': [
@@ -211,7 +211,7 @@ if not use_hip:
     MODULES.append({
         'name': 'cutensor',
         'file': [
-            'cupy_backends.cuda.libs.cutensor',
+            'cupy_backends.libs.cutensor',
             'cupy.cutensor',
         ],
         'include': [
@@ -575,7 +575,7 @@ def make_extensions(options, compiler, use_cython):
                 # The path is resolved relative to the module, e.g., use
                 # `$ORIGIN/../cupy/.data/lib` for `cupy/cudnn.so` and
                 # `$ORIGIN/../../../cupy/.data/lib` for
-                # `cupy_backends/cuda/libs/cudnn.so`.
+                # `cupy_backends/libs/cudnn.so`.
                 depth = name.count('.')
                 rpath.append(
                     '{}{}/cupy/.data/lib'.format(_rpath_base(), '/..' * depth))

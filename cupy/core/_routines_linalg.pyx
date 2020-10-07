@@ -24,11 +24,11 @@ from cupy.core.core cimport ndarray
 from cupy.core cimport _routines_manipulation as _manipulation
 from cupy.core cimport _routines_math as _math
 from cupy.cuda cimport device
-from cupy_backends.cuda.api cimport runtime
-from cupy_backends.cuda.libs cimport cublas
+from cupy_backends.api cimport runtime
+from cupy_backends.libs cimport cublas
 
 
-cdef extern from '../../cupy_backends/cuda/cupy_cuComplex.h':
+cdef extern from '../../cupy_backends/cupy_cuComplex.h':
     ctypedef struct cuComplex 'cuComplex':
         float x, y
 

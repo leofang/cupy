@@ -7,18 +7,18 @@ from libc.stdint cimport intptr_t, uint32_t, uint64_t
 from cupy.core._carray cimport shape_t
 from cupy.core.core cimport ndarray
 from cupy.core cimport internal
-from cupy_backends.cuda.libs.cutensor cimport Handle
-from cupy_backends.cuda.libs.cutensor cimport TensorDescriptor
-from cupy_backends.cuda.libs.cutensor cimport ContractionDescriptor
-from cupy_backends.cuda.libs.cutensor cimport ContractionFind
-from cupy_backends.cuda.libs.cutensor cimport ContractionPlan
+from cupy_backends.libs.cutensor cimport Handle
+from cupy_backends.libs.cutensor cimport TensorDescriptor
+from cupy_backends.libs.cutensor cimport ContractionDescriptor
+from cupy_backends.libs.cutensor cimport ContractionFind
+from cupy_backends.libs.cutensor cimport ContractionPlan
 
 from cupy.core cimport core
 from cupy.core cimport _routines_linalg as _linalg
 from cupy.core cimport _reduction
 from cupy.cuda cimport device
-from cupy_backends.cuda.api cimport runtime
-from cupy_backends.cuda.libs cimport cutensor
+from cupy_backends.api cimport runtime
+from cupy_backends.libs cimport cutensor
 
 
 cdef dict _handles = {}

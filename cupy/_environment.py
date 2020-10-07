@@ -10,7 +10,7 @@ import shutil
 import sys
 import warnings
 
-from cupy_backends.cuda.api import runtime
+from cupy_backends.api import runtime
 
 
 # '' for uninitialized, None for non-existing

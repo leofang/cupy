@@ -4,19 +4,19 @@ from libc.string cimport memset as c_memset
 import numpy
 
 from cupy.core.core cimport ndarray
-from cupy_backends.cuda.api cimport driver
-from cupy_backends.cuda.api cimport runtime
-from cupy_backends.cuda.api.runtime cimport Array,\
+from cupy_backends.api cimport driver
+from cupy_backends.api cimport runtime
+from cupy_backends.api.runtime cimport Array,\
     ChannelFormatDesc, ChannelFormatKind,\
     Memcpy3DParms, MemoryKind, PitchedPtr, ResourceDesc, ResourceType, \
     TextureAddressMode, TextureDesc, TextureFilterMode, TextureReadMode
-from cupy_backends.cuda.api.runtime import CUDARuntimeError
+from cupy_backends.api.runtime import CUDARuntimeError
 
 
-cdef extern from '../../cupy_backends/cuda/cupy_cuda.h':
+cdef extern from '../../cupy_backends/cupy_cuda.h':
     pass
 
-cdef extern from '../../cupy_backends/cuda/cupy_cuda_runtime.h':
+cdef extern from '../../cupy_backends/cupy_cuda_runtime.h':
     pass
 
 

@@ -1,9 +1,9 @@
 import numpy as _numpy
 
 import cupy as _cupy
-from cupy_backends.cuda.api import runtime as _runtime
-from cupy_backends.cuda.libs import cublas as _cublas
-from cupy_backends.cuda.libs import cusolver as _cusolver
+from cupy_backends.api import runtime as _runtime
+from cupy_backends.libs import cublas as _cublas
+from cupy_backends.libs import cusolver as _cusolver
 from cupy.cuda import device as _device
 from cupy import _util
 

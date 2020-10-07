@@ -4,8 +4,8 @@
 
 from cpython cimport sequence
 
-from cupy_backends.cuda.api.driver cimport Stream as Stream_t
-from cupy_backends.cuda.api cimport runtime
+from cupy_backends.api.driver cimport Stream as Stream_t
+from cupy_backends.api cimport runtime
 from cupy.core.core cimport _internal_ascontiguousarray
 from cupy.core.core cimport _internal_asfortranarray
 from cupy.core.internal cimport _contig_axes

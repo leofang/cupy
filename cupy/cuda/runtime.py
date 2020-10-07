@@ -1,1 +1,1 @@
-from cupy_backends.cuda.api.runtime import *  # NOQA
+from cupy_backends.api.runtime import *  # NOQA

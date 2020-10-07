@@ -7,7 +7,7 @@ from cupy import core
 from cupyx.scipy.sparse.base import isspmatrix
 from cupyx.scipy.sparse.base import spmatrix
 
-from cupy_backends.cuda.libs import cusparse
+from cupy_backends.libs import cusparse
 from cupy.cuda import device
 
 import numpy

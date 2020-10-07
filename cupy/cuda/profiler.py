@@ -1,1 +1,1 @@
-from cupy_backends.cuda.libs.profiler import *  # NOQA
+from cupy_backends.libs.profiler import *  # NOQA
