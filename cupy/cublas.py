@@ -4,7 +4,7 @@ from numpy import linalg
 import warnings
 
 import cupy
-from cupy_backends.cuda.libs import cublas
+from cupy_backends.libs import cublas
 from cupy.cuda import device
 from cupy.linalg import util
 
