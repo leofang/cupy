@@ -1,5 +1,3 @@
-// This file is a stub header file of cuda for Read the Docs.
-
 #ifndef INCLUDE_GUARD_CUDA_CUPY_CUBLAS_H
 #define INCLUDE_GUARD_CUDA_CUPY_CUBLAS_H
 
