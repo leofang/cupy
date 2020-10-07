@@ -17,5 +17,4 @@ struct cuDoubleComplex{
 
 } // extern "C"
 
-#endif // #ifndef CUPY_NO_CUDA
 #endif // #ifndef INCLUDE_GUARD_HIP_CUPY_COMPLEX_H

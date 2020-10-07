@@ -7,10 +7,13 @@
 
 #elif defined(CUPY_USE_HIP)
 
+// TODO(leofang): support hipSPARSE
 #include "hip/cupy_cusparse.h"
+#include "stub/cupy_cusparse.h"
 
 #else
 
+#include "stub/cupy_cuda_common.h"
 #include "stub/cupy_cusparse.h"
 
 #endif  // #if defined(CUPY_NO_CUDA) || defined(CUPY_USE_HIP)
