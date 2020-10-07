@@ -7,7 +7,7 @@
 
 #elif defined(CUPY_USE_HIP) // #if !defined(CUPY_NO_CUDA) && !defined(CUPY_USE_HIP)
 
-#include "hip/cupy_hipsolver.h"
+#include "hip/cupy_rocsolver.h"
 
 #else // #if !defined(CUPY_NO_CUDA) && !defined(CUPY_USE_HIP)
 
