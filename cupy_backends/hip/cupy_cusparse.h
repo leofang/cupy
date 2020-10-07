@@ -12,6 +12,8 @@ typedef enum {
 
 typedef void* cusparseHandle_t;
 typedef void* cusparseMatDescr_t;
+typedef void* csrsv2Info_t;
+typedef void* csrsm2Info_t;
 typedef void* csric02Info_t;
 typedef void* bsric02Info_t;
 typedef void* csrilu02Info_t;
@@ -19,6 +21,8 @@ typedef void* bsrilu02Info_t;
 typedef void* csrgemm2Info_t;
 
 typedef enum {} cusparseMatrixType_t;
+typedef enum {} cusparseFillMode_t;
+typedef enum {} cusparseDiagType_t;
 typedef enum {} cusparseOperation_t;
 typedef enum {} cusparsePointerMode_t;
 typedef enum {} cusparseAction_t;
@@ -53,6 +57,14 @@ cusparseStatus_t cusparseSetMatIndexBase(...) {
 }
 
 cusparseStatus_t cusparseSetMatType(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseSetMatFillMode(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseSetMatDiagType(...) {
   return CUSPARSE_STATUS_SUCCESS;
 }
 
@@ -111,6 +123,66 @@ cusparseStatus_t cusparseCsrmvEx(...) {
   return CUSPARSE_STATUS_SUCCESS;
 }
 
+cusparseStatus_t cusparseCreateCsrsv2Info(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseDestroyCsrsv2Info(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseScsrsv2_bufferSize(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseDcsrsv2_bufferSize(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseCcsrsv2_bufferSize(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseZcsrsv2_bufferSize(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseScsrsv2_analysis(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseDcsrsv2_analysis(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseCcsrsv2_analysis(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseZcsrsv2_analysis(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseScsrsv2_solve(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseDcsrsv2_solve(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseCcsrsv2_solve(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseZcsrsv2_solve(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseXcsrsv2_zeroPivot(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
 // cuSPARSE Level3 Function
 cusparseStatus_t cusparseScsrmm(...) {
   return CUSPARSE_STATUS_SUCCESS;
@@ -144,6 +216,55 @@ cusparseStatus_t cusparseZcsrmm2(...) {
   return CUSPARSE_STATUS_SUCCESS;
 }
 
+cusparseStatus_t cusparseCreateCsrsm2Info(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseDestroyCsrsm2Info(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseScsrsm2_bufferSizeExt(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseDcsrsm2_bufferSizeExt(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseCcsrsm2_bufferSizeExt(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseZcsrsm2_bufferSizeExt(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseScsrsm2_analysis(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseDcsrsm2_analysis(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseCcsrsm2_analysis(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseZcsrsm2_analysis(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseScsrsm2_solve(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseDcsrsm2_solve(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseCcsrsm2_solve(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+cusparseStatus_t cusparseZcsrsm2_solve(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
+
+cusparseStatus_t cusparseXcsrsm2_zeroPivot(...) {
+  return CUSPARSE_STATUS_SUCCESS;
+}
 
 // cuSPARSE Extra Function
 cusparseStatus_t cusparseXcsrgeamNnz(...) {
