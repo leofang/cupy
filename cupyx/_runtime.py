@@ -38,7 +38,7 @@ try:
 except ImportError:
     scipy = None
 
-is_hip = cupy_backends.cuda.api.runtime.is_hip
+is_hip = cupy_backends.api.runtime.is_hip
 
 
 def _eval_or_error(func, errors):
