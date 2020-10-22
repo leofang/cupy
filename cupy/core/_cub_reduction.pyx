@@ -34,7 +34,7 @@ cdef function.Function _create_cub_reduction_function(
     # In ROCm, we need to set the include path. This does not work for hiprtc
     # as of ROCm 3.5.0, so we must use hipcc.
     if runtime._is_hip_environment:
-        options += ('-I' + _rocm_path + '/include',)
+        options += ('-I' + _rocm_path + '/include', '-O3')
 
     # TODO(leofang): try splitting the for-loop into full tiles and partial
     # tiles to utilize LoadDirectBlockedVectorized? See, for example,
@@ -106,8 +106,8 @@ __global__ void ${name}(${params}) {
   _reduction_op op;
 
   // input & output raw pointers
-  const type_mid_in* _in0 = static_cast<const type_mid_in*>(_raw_in0);
-  type_mid_out* _out0 = static_cast<type_mid_out*>(_raw_out0);
+  const type_mid_in* __restrict__ _in0 = static_cast<const type_mid_in*>(_raw_in0);
+  type_mid_out* __restrict__ _out0 = static_cast<type_mid_out*>(_raw_out0);
 
   // Per-thread tile data
   _type_reduce _sdata[ITEMS_PER_THREAD];
@@ -344,7 +344,10 @@ cdef str _get_cub_kernel_params(tuple params, tuple arginfos):
 
     for i, (p, arginfo) in enumerate(zip(params, arginfos)):
         if i < len(params) - 2:
-            c_type = 'const void*' if p.is_const else 'void*'
+            if p.is_const:
+                c_type = 'const void* __restrict__'
+            else:
+                c_type = 'void* __restrict__'
         else:
             # for segment size and array size
             c_type = arginfo.get_param_c_type(p)
