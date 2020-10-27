@@ -3,6 +3,7 @@
 """Wrapper of CUB functions for CuPy API."""
 
 from cpython cimport sequence
+from libcpp cimport vector
 
 from cupy_backends.cuda.api.driver cimport Stream as Stream_t
 from cupy_backends.cuda.api cimport runtime
@@ -50,7 +51,7 @@ cdef extern from 'cupy_cub.h' nogil:
     void cub_device_reduce(void*, size_t&, void*, void*, int, Stream_t,
                            int, int)
     void cub_device_segmented_reduce(void*, size_t&, void*, void*, int, int,
-                                     Stream_t, int, int)
+                                     bint, int*, int*, int, Stream_t, int, int)
     void cub_device_spmv(void*, size_t&, void*, void*, void*, void*, void*,
                          int, int, int, Stream_t, int)
     void cub_device_scan(void*, size_t&, void*, void*, int, Stream_t, int, int)
@@ -59,7 +60,7 @@ cdef extern from 'cupy_cub.h' nogil:
     size_t cub_device_reduce_get_workspace_size(void*, void*, int, Stream_t,
                                                 int, int)
     size_t cub_device_segmented_reduce_get_workspace_size(
-        void*, void*, int, int, Stream_t, int, int)
+        void*, void*, int, int, bint, int*, int*, int, Stream_t, int, int)
     size_t cub_device_spmv_get_workspace_size(
         void*, void*, void*, void*, void*, int, int, int, Stream_t, int)
     size_t cub_device_scan_get_workspace_size(
@@ -191,7 +192,10 @@ def device_segmented_reduce(ndarray x, op, tuple reduce_axis,
     cdef void* y_ptr
     cdef void* ws_ptr
     cdef void* offset_start_ptr
-    cdef int dtype_id, n_segments, op_code
+    cdef int dtype_id, n_segments, op_code, ndim
+    cdef vector.vector[int] shape
+    cdef vector.vector[int] strides
+    cdef bint is_segment_contiguous
     cdef size_t ws_size
     cdef tuple out_shape
     cdef Stream_t s
@@ -226,18 +230,28 @@ def device_segmented_reduce(ndarray x, op, tuple reduce_axis,
             y[...] = 1
         return y
     n_segments = x.size//contiguous_size
+    is_segment_contiguous = _contig_axes(reduce_axis)
+    shape = x.shape
+    strides = x.strides
+    ndim = <int>x.ndim
+    for i in range(ndim):
+        strides[i] /= x.itemsize  # convert to counts
     s = <Stream_t>stream.get_current_stream_ptr()
     dtype_id = common._get_dtype_id(x.dtype)
 
     # get workspace size and then fire up
     ws_size = cub_device_segmented_reduce_get_workspace_size(
-        x_ptr, y_ptr, n_segments, contiguous_size, s, op, dtype_id)
+        x_ptr, y_ptr, n_segments, contiguous_size,
+        is_segment_contiguous, shape.data(), strides.data(), ndim,
+        s, op, dtype_id)
     ws = memory.alloc(ws_size)
     ws_ptr = <void*>ws.ptr
     op_code = <int>op
     with nogil:
-        cub_device_segmented_reduce(ws_ptr, ws_size, x_ptr, y_ptr, n_segments,
-                                    contiguous_size, s, op_code, dtype_id)
+        cub_device_segmented_reduce(
+            ws_ptr, ws_size, x_ptr, y_ptr, n_segments, contiguous_size,
+            is_segment_contiguous, shape.data(), strides.data(), ndim,
+            s, op_code, dtype_id)
 
     if out is not None:
         out[...] = y
