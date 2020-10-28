@@ -159,39 +159,38 @@ typedef TransformInputIterator<int, _arange, rocprim::counting_iterator<int>> se
 //
 // strided indexer
 // Note: unlike CArray/CIndexer, this class cannot be templated, as we have no way to determine
-// the template arguments at compile time. Must work around...
+// the input ndim at build time. Must work around...
 //
 
 struct _strider
 {
   private:
-    // both fields are in units of counts, ignorant of type size
-    thrust::device_vector<int> shape_;
-    thrust::device_vector<int> strides_;
-    int ndim_;
+    // 1. both fields are in units of counts, ignorant of type size
+    // 2. we hard-code 32 to follow NumPy (NPY_MAXDIMS); see cupy/cupy#4193
+    int shape[32];
+    int strides[32];
+    int ndim;
 
   public:
-    __host__ __forceinline__
-    _strider(int* shape, int* strides, int ndim): ndim_(ndim) {
-        shape_.resize(ndim);
-        strides_.resize(ndim);
-        for (int i=0; i<ndim; i++) {
-            shape_[i] = shape[i];
-            strides_[i] = strides_[i];
+    __host__ __device__ __forceinline__
+    _strider(int* _shape, int* _strides, int _ndim): ndim(_ndim) {
+        for (int i=0; i<_ndim; i++) {
+            shape[i] = _shape[i];
+            strides[i] = _strides[i];
         }
     }
 
-    __device__ __forceinline__
+    __host__ __device__ __forceinline__
     int operator()(const int& i) const {
         int idx = 0;
         int j = i;
-        for (int dim = ndim_; --dim > 0; ) {
-            int shape_dim = shape_[dim];
-            idx += strides_[dim] * (j % shape_dim);
+        for (int d = ndim; --d > 0; ) {
+            int shape_dim = shape[d];
+            idx += strides[d] * (j % shape_dim);
             j /= shape_dim;
         }
-        if (ndim_ > 0) {
-          idx += strides_[0] * j;
+        if (ndim > 0) {
+            idx += strides[0] * j;
         }
         return idx;
     }
