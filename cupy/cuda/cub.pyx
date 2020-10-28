@@ -3,7 +3,6 @@
 """Wrapper of CUB functions for CuPy API."""
 
 from cpython cimport sequence
-from libcpp cimport vector
 
 from cupy_backends.cuda.api.driver cimport Stream as Stream_t
 from cupy_backends.cuda.api cimport runtime
@@ -96,21 +95,10 @@ cdef tuple _get_output_shape(ndarray arr, tuple out_axis, bint keepdims):
     return out_shape
 
 
-cpdef Py_ssize_t _preprocess_array(tuple arr_shape, tuple reduce_axis,
-                                   tuple out_axis, str order) except -1:
-    '''
-    This function more or less follows the logic of _get_permuted_args() in
-    reduction.pxi. The input array arr is C- or F- contiguous along axis.
-    '''
-    cdef tuple axis_permutes, out_shape
+cdef Py_ssize_t _preprocess_array(
+        tuple arr_shape, tuple reduce_axis) except -1:
     cdef Py_ssize_t contiguous_size = 1
-
-    # one more sanity check?
-    if order == 'C':
-        axis_permutes = out_axis + reduce_axis
-    elif order == 'F':
-        axis_permutes = reduce_axis + out_axis
-    assert axis_permutes == tuple(range(len(arr_shape)))
+    cdef int axis
 
     for axis in reduce_axis:
         contiguous_size *= arr_shape[axis]
@@ -193,8 +181,8 @@ def device_segmented_reduce(ndarray x, op, tuple reduce_axis,
     cdef void* ws_ptr
     cdef void* offset_start_ptr
     cdef int dtype_id, n_segments, op_code, ndim
-    cdef vector.vector[int] shape
-    cdef vector.vector[int] strides
+    cdef int shape[32]
+    cdef int strides[32]
     cdef bint is_segment_contiguous
     cdef size_t ws_size
     cdef tuple out_shape
@@ -231,18 +219,17 @@ def device_segmented_reduce(ndarray x, op, tuple reduce_axis,
         return y
     n_segments = x.size//contiguous_size
     is_segment_contiguous = _contig_axes(reduce_axis)
-    shape = x.shape
-    strides = x.strides
     ndim = <int>x.ndim
     for i in range(ndim):
-        strides[i] /= x.itemsize  # convert to counts
+        shape[i] = x.shape[i]
+        strides[i] = x.strides[i] / x.itemsize  # convert to counts
     s = <Stream_t>stream.get_current_stream_ptr()
     dtype_id = common._get_dtype_id(x.dtype)
 
     # get workspace size and then fire up
     ws_size = cub_device_segmented_reduce_get_workspace_size(
         x_ptr, y_ptr, n_segments, contiguous_size,
-        is_segment_contiguous, shape.data(), strides.data(), ndim,
+        is_segment_contiguous, shape, strides, ndim,
         s, op, dtype_id)
     ws = memory.alloc(ws_size)
     ws_ptr = <void*>ws.ptr
@@ -250,7 +237,7 @@ def device_segmented_reduce(ndarray x, op, tuple reduce_axis,
     with nogil:
         cub_device_segmented_reduce(
             ws_ptr, ws_size, x_ptr, y_ptr, n_segments, contiguous_size,
-            is_segment_contiguous, shape.data(), strides.data(), ndim,
+            is_segment_contiguous, shape, strides, ndim,
             s, op_code, dtype_id)
 
     if out is not None:
@@ -382,6 +369,8 @@ def device_histogram(ndarray x, ndarray bins, ndarray y):
     return y
 
 
+# TODO(leofang): remove this once we also use the strided iterator
+# in cupy/core/_cub_reduction.pyx
 cpdef bint _cub_device_segmented_reduce_axis_compatible(
         tuple cub_axis, Py_ssize_t ndim, str order):
     # This function checks if the reduced axes are C- or F- contiguous.
@@ -406,12 +395,8 @@ cdef (bint, Py_ssize_t) can_use_device_segmented_reduce(  # noqa: E211
         dtype=None, str order='C') except*:
     if not _cub_reduce_dtype_compatible(x.dtype, op, dtype):
         return (False, 0)
-    if not _cub_device_segmented_reduce_axis_compatible(
-            reduce_axis, x.ndim, order):
-        return (False, 0)
     # until we resolve cupy/cupy#3309
-    cdef Py_ssize_t contiguous_size = _preprocess_array(
-        x.shape, reduce_axis, out_axis, order)
+    cdef Py_ssize_t contiguous_size = _preprocess_array(x.shape, reduce_axis)
     return (contiguous_size <= 0x7fffffff, contiguous_size)
 
 
