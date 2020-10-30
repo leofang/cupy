@@ -218,7 +218,8 @@ def device_segmented_reduce(ndarray x, op, tuple reduce_axis,
             y[...] = 1
         return y
     n_segments = x.size//contiguous_size
-    is_segment_contiguous = _contig_axes(reduce_axis)
+    is_segment_contiguous = _cub_device_segmented_reduce_axis_compatible(
+        reduce_axis, x.ndim, order)
     ndim = <int>x.ndim
     for i in range(ndim):
         shape[i] = x.shape[i]

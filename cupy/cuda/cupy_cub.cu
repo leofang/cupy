@@ -182,17 +182,20 @@ struct _strider
 
     __host__ __device__ __forceinline__
     int operator()(const int& i) const {
-        int idx = 0;
-        int j = i;
-        for (int d = ndim; --d > 0; ) {
-            int shape_dim = shape[d];
-            idx += strides[d] * (j % shape_dim);
-            j /= shape_dim;
-        }
-        if (ndim > 0) {
-            idx += strides[0] * j;
-        }
-        return idx;
+        //int idx = 0;
+        //int j = i;
+        //for (int d = ndim; --d > 0; ) {
+        //    int shape_dim = shape[d];
+        //    idx += strides[d] * (j % shape_dim);
+        //    j /= shape_dim;
+        //}
+        //if (ndim > 0) {
+        //    idx += strides[0] * j;
+        //}
+        //return idx;
+
+        //return 12 * (i % 2) + (i / 2);  // shape: (2, 3, 4), reduce_axis: (0,)
+        //return 4 * (i % 3) + (i / 3) + 8 * (i / 12);  // shape: (2, 3, 4), reduce_axis: (1,)
     }
 };
 
@@ -563,6 +566,7 @@ struct _cub_segmented_reduce_sum {
                 static_cast<T*>(x), static_cast<T*>(y), num_segments,
                 offset_start, offset_start+1, s);
         } else {
+            printf("I am called!\n");
             #ifndef CUPY_USE_HIP
             CountingInputIterator<int> count_itr(0);
             #else
