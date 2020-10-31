@@ -164,20 +164,21 @@ typedef TransformInputIterator<int, _arange, rocprim::counting_iterator<int>> se
 
 struct _strider
 {
+  #define MAX_NDIM 32
+
   private:
     // 1. both fields are in units of counts, ignorant of type size
     // 2. we hard-code 32 to follow NumPy (NPY_MAXDIMS); see cupy/cupy#4193
     // 3. use int to follow the internal of device_segmented_reduce
-    int shape[32];
-    int strides[32];
+    int shape_strides[2*MAX_NDIM];
     int ndim;  // always > 1
 
   public:
     __host__ __device__ __forceinline__
     _strider(int* _shape, int* _strides, int _ndim): ndim(_ndim) {
         for (int i=0; i<_ndim; i++) {
-            shape[i] = _shape[i];
-            strides[i] = _strides[i];
+            shape_strides[2*i] = _shape[i];
+            shape_strides[2*i+1] = _strides[i];
         }
     }
 
@@ -186,9 +187,10 @@ struct _strider
         int idx = 0;
         int j = i;
         for (int d = ndim - 1; d >= 0; d--) {
-            int shape_dim = shape[d];
-            idx += strides[d] * (j % shape_dim);
-            j /= shape_dim;
+            int shape = shape_strides[2*d];
+            int stride = shape_strides[2*d+1];
+            idx += stride * (j % shape);
+            j /= shape;
         }
         return idx;
     }
