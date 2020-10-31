@@ -50,7 +50,7 @@ cdef extern from 'cupy_cub.h' nogil:
     void cub_device_reduce(void*, size_t&, void*, void*, int, Stream_t,
                            int, int)
     void cub_device_segmented_reduce(void*, size_t&, void*, void*, int, int,
-                                     bint, int*, int*, int, Stream_t, int, int)
+                                     bint, int*, int*, int, void*, Stream_t, int, int)
     void cub_device_spmv(void*, size_t&, void*, void*, void*, void*, void*,
                          int, int, int, Stream_t, int)
     void cub_device_scan(void*, size_t&, void*, void*, int, Stream_t, int, int)
@@ -197,12 +197,12 @@ def device_reduce(ndarray x, op, tuple out_axis, out=None,
 def device_segmented_reduce(ndarray x, op, tuple reduce_axis,
                             tuple out_axis, out=None, bint keepdims=False,
                             Py_ssize_t contiguous_size=0):
-    cdef ndarray y, offset
+    cdef ndarray y, offset, ws2, ws3
     cdef str order
     cdef memory.MemoryPointer ws
     cdef void* x_ptr
     cdef void* y_ptr
-    cdef void* ws_ptr
+    cdef void *ws_ptr, *ws2_ptr
     cdef void* offset_start_ptr
     cdef int dtype_id, n_segments, op_code, ndim
     cdef int shape[32]
@@ -251,6 +251,19 @@ def device_segmented_reduce(ndarray x, op, tuple reduce_axis,
         for i in range(ndim):
             shape[i] = itr_shape[i]
             strides[i] = itr_strides[i]
+        #ws2 = memory.alloc(x.size * x.itemsize)  # WARNING!
+        #ws2_ptr = <void*>ws2.ptr
+        from cupy._creation.ranges import arange
+        ws2 = arange(0, x.size, dtype=numpy.int32)
+        ws3 = ndarray((x.size,), dtype=numpy.int32)
+        ws3[...] = 0
+        for i in range(ndim-1, -1, -1):
+            ws3 = ws3 + itr_strides[i] * (ws2 % itr_shape[i])
+            ws2 = ws2 // itr_shape[i]
+        #print(ws3)
+        ws2_ptr = <void*>ws3.data.ptr
+    else:
+        ws2_ptr = NULL
     s = <Stream_t>stream.get_current_stream_ptr()
     dtype_id = common._get_dtype_id(x.dtype)
 
@@ -265,7 +278,7 @@ def device_segmented_reduce(ndarray x, op, tuple reduce_axis,
     with nogil:
         cub_device_segmented_reduce(
             ws_ptr, ws_size, x_ptr, y_ptr, n_segments, contiguous_size,
-            is_segment_contiguous, shape, strides, ndim,
+            is_segment_contiguous, shape, strides, ndim, ws2_ptr,
             s, op_code, dtype_id)
 
     if out is not None:

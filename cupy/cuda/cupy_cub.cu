@@ -196,9 +196,26 @@ struct _strider
     }
 };
 
+
+__global__ void strider_ker(int* idx, const int* shape, const int* strides, const int len, const int ndim) {
+    unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (tid < len) {
+        int i = 0;
+        int j = tid;
+        for (int d = ndim - 1; d >= 0; d--) {
+            int sh = shape[d];
+            int st = strides[d];
+            i += st * (j % sh);
+            j /= sh;
+        }
+        idx[tid] = i;
+    }
+}
+
 #ifndef CUPY_USE_HIP
 typedef TransformInputIterator<int, _strider, CountingInputIterator<int>> _transformer;
-template<typename T> using seg_strided_iter = thrust::permutation_iterator<T*, _transformer>;
+template<typename T> using seg_strided_iter = thrust::permutation_iterator<T*, int*>;
 #else
 // TODO
 #endif
@@ -556,7 +573,7 @@ struct _cub_segmented_reduce_sum {
     template <typename T>
     void operator()(void* workspace, size_t& workspace_size, void* x, void* y,
         int num_segments, seg_offset_itr offset_start, bool is_seg_contiguous,
-        int* shape, int* strides, int ndim, cudaStream_t s)
+        int* shape, int* strides, int ndim, void* idx, cudaStream_t s)
     {
         if (is_seg_contiguous) {
             DeviceSegmentedReduce::Sum(workspace, workspace_size,
@@ -568,9 +585,9 @@ struct _cub_segmented_reduce_sum {
             #else
             rocprim::counting_iterator<int> count_itr(0);
             #endif
-            _strider strider(shape, strides, ndim);
-            _transformer transformer(count_itr, strider);
-            seg_strided_iter<T> x_itr(static_cast<T*>(x), transformer);
+            //_strider strider(shape, strides, ndim);
+            //_transformer transformer(count_itr, strider);
+            seg_strided_iter<T> x_itr(static_cast<T*>(x), (int*)idx);
             DeviceSegmentedReduce::Sum(workspace, workspace_size,
                 x_itr, static_cast<T*>(y), num_segments,
                 offset_start, offset_start+1, s);
@@ -823,7 +840,7 @@ size_t cub_device_reduce_get_workspace_size(void* x, void* y, int num_items,
 
 void cub_device_segmented_reduce(void* workspace, size_t& workspace_size,
     void* x, void* y, int num_segments, int segment_size,
-    bool is_seg_contiguous, int* shape, int* strides, int ndim,
+    bool is_seg_contiguous, int* shape, int* strides, int ndim, void* idx,
     cudaStream_t stream, int op, int dtype_id)
 {
     // CUB internally use int for offset...
@@ -836,11 +853,19 @@ void cub_device_segmented_reduce(void* workspace, size_t& workspace_size,
     _arange scaling(segment_size);
     seg_offset_itr itr(count_itr, scaling);
 
+
+    //int size = 1;
+    //for (int i = 0; i < ndim; i++) {
+    //    size *= shape[i];
+    //}
+    //strider_ker<<<(size+255)/256, 256, 0, stream>>>((int*)idx, shape, strides, size, ndim);
+
+
     switch(op) {
     case CUPY_CUB_SUM:
         return dtype_dispatcher(dtype_id, _cub_segmented_reduce_sum(),
                    workspace, workspace_size, x, y, num_segments, itr,
-                   is_seg_contiguous, shape, strides, ndim, stream);
+                   is_seg_contiguous, shape, strides, ndim, idx, stream);
 //    case CUPY_CUB_MIN:
 //        return dtype_dispatcher(dtype_id, _cub_segmented_reduce_min(),
 //                   workspace, workspace_size, x, y, num_segments, itr, stream);
@@ -863,7 +888,7 @@ size_t cub_device_segmented_reduce_get_workspace_size(void* x, void* y,
     size_t workspace_size = 0;
     cub_device_segmented_reduce(NULL, workspace_size, x, y,
                                 num_segments, segment_size,
-                                is_seg_contiguous, shape, strides, ndim,
+                                is_seg_contiguous, shape, strides, ndim, NULL,
                                 stream, op, dtype_id);
     return workspace_size;
 }

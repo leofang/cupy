@@ -26,7 +26,7 @@
 #endif
 
 void cub_device_reduce(void*, size_t&, void*, void*, int, cudaStream_t, int, int);
-void cub_device_segmented_reduce(void*, size_t&, void*, void*, int, int, bool, int*, int*, int, cudaStream_t, int, int);
+void cub_device_segmented_reduce(void*, size_t&, void*, void*, int, int, bool, int*, int*, int, void*, cudaStream_t, int, int);
 void cub_device_spmv(void*, size_t&, void*, void*, void*, void*, void*, int, int, int, cudaStream_t, int);
 void cub_device_scan(void*, size_t&, void*, void*, int, cudaStream_t, int, int);
 void cub_device_histogram_range(void*, size_t&, void*, void*, int, void*, size_t, cudaStream_t, int);
