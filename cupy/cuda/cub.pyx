@@ -95,6 +95,30 @@ cdef tuple _get_output_shape(ndarray arr, tuple out_axis, bint keepdims):
     return out_shape
 
 
+cpdef tuple _get_segment_shape_strides(
+        tuple shape, tuple strides, tuple reduce_axis, size_t itemsize):
+    ''' For device segmented reduce with non-contiguous reduction axes. '''
+    cdef int ndim = len(shape)
+    cdef list out_shape = []
+    cdef list out_strides = []
+    cdef list reduce_shape = []
+    cdef list reduce_strides = []
+    cdef int i
+
+    for i in range(ndim):
+        if i not in reduce_axis:
+            out_shape.append(shape[i])
+            out_strides.append(strides[i]//itemsize)  # convert to counts
+        else:
+            reduce_shape.append(shape[i])
+            reduce_strides.append(strides[i]//itemsize)  # convert to counts
+    out_shape += reduce_shape
+    out_strides += reduce_strides
+    assert len(out_shape) == len(out_strides) == ndim
+
+    return tuple(out_shape), tuple(out_strides)
+
+
 cdef Py_ssize_t _preprocess_array(
         tuple arr_shape, tuple reduce_axis) except -1:
     cdef Py_ssize_t contiguous_size = 1
@@ -185,7 +209,7 @@ def device_segmented_reduce(ndarray x, op, tuple reduce_axis,
     cdef int strides[32]
     cdef bint is_segment_contiguous
     cdef size_t ws_size
-    cdef tuple out_shape
+    cdef tuple out_shape, itr_shape, itr_strides
     cdef Stream_t s
 
     if op not in (CUPY_CUB_SUM, CUPY_CUB_PROD, CUPY_CUB_MIN, CUPY_CUB_MAX):
@@ -218,12 +242,15 @@ def device_segmented_reduce(ndarray x, op, tuple reduce_axis,
             y[...] = 1
         return y
     n_segments = x.size//contiguous_size
-    is_segment_contiguous = _cub_device_segmented_reduce_axis_compatible(
-        reduce_axis, x.ndim, order)
     ndim = <int>x.ndim
-    for i in range(ndim):
-        shape[i] = x.shape[i]
-        strides[i] = x.strides[i] / x.itemsize  # convert to counts
+    is_segment_contiguous = _cub_device_segmented_reduce_axis_compatible(
+        reduce_axis, ndim, order)
+    if not is_segment_contiguous:
+        itr_shape, itr_strides = _get_segment_shape_strides(
+            x.shape, x.strides, reduce_axis, x.itemsize)
+        for i in range(ndim):
+            shape[i] = itr_shape[i]
+            strides[i] = itr_strides[i]
     s = <Stream_t>stream.get_current_stream_ptr()
     dtype_id = common._get_dtype_id(x.dtype)
 

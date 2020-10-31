@@ -167,9 +167,10 @@ struct _strider
   private:
     // 1. both fields are in units of counts, ignorant of type size
     // 2. we hard-code 32 to follow NumPy (NPY_MAXDIMS); see cupy/cupy#4193
+    // 3. use int to follow the internal of device_segmented_reduce
     int shape[32];
     int strides[32];
-    int ndim;
+    int ndim;  // always > 1
 
   public:
     __host__ __device__ __forceinline__
@@ -182,28 +183,22 @@ struct _strider
 
     __host__ __device__ __forceinline__
     int operator()(const int& i) const {
-        //int idx = 0;
-        //int j = i;
-        //for (int d = ndim; --d > 0; ) {
-        //    int shape_dim = shape[d];
-        //    idx += strides[d] * (j % shape_dim);
-        //    j /= shape_dim;
-        //}
-        //if (ndim > 0) {
-        //    idx += strides[0] * j;
-        //}
-        //return idx;
-
-        //return 12 * (i % 2) + (i / 2);  // shape: (2, 3, 4), reduce_axis: (0,)
-        //return 4 * (i % 3) + (i / 3) + 8 * (i / 12);  // shape: (2, 3, 4), reduce_axis: (1,)
+        int idx = 0;
+        int j = i;
+        for (int d = ndim - 1; d >= 0; d--) {
+            int shape_dim = shape[d];
+            idx += strides[d] * (j % shape_dim);
+            j /= shape_dim;
+        }
+        return idx;
     }
 };
 
 #ifndef CUPY_USE_HIP
-//template<typename T>
-//thrust::permutation_iterator<
-//    T*,
-//    TransformInputIterator<int, _strider, CountingInputIterator<int>>> seg_strided_itr;
+typedef TransformInputIterator<int, _strider, CountingInputIterator<int>> _transformer;
+template<typename T> using seg_strided_iter = thrust::permutation_iterator<T*, _transformer>;
+#else
+// TODO
 #endif
 
 /*
@@ -566,17 +561,14 @@ struct _cub_segmented_reduce_sum {
                 static_cast<T*>(x), static_cast<T*>(y), num_segments,
                 offset_start, offset_start+1, s);
         } else {
-            printf("I am called!\n");
             #ifndef CUPY_USE_HIP
             CountingInputIterator<int> count_itr(0);
             #else
             rocprim::counting_iterator<int> count_itr(0);
             #endif
-            typedef TransformInputIterator<int, _strider, CountingInputIterator<int>> _transformer;
-            typedef typename thrust::permutation_iterator<T*, _transformer> _seg_strided_iter;
             _strider strider(shape, strides, ndim);
             _transformer transformer(count_itr, strider);
-            _seg_strided_iter x_itr(static_cast<T*>(x), transformer);
+            seg_strided_iter<T> x_itr(static_cast<T*>(x), transformer);
             DeviceSegmentedReduce::Sum(workspace, workspace_size,
                 x_itr, static_cast<T*>(y), num_segments,
                 offset_start, offset_start+1, s);
