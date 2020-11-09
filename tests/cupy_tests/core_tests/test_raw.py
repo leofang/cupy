@@ -380,12 +380,12 @@ def compile_in_memory(in_memory):
 
 
 @testing.parameterize(
-    # First test NVRTC
-    {'backend': 'nvrtc', 'in_memory': False},
-    # this run will read from in-memory cache
-    {'backend': 'nvrtc', 'in_memory': True},
-    # this run will force recompilation
-    {'backend': 'nvrtc', 'in_memory': True, 'clean_up': True},
+#    # First test NVRTC
+#    {'backend': 'nvrtc', 'in_memory': False},
+#    # this run will read from in-memory cache
+#    {'backend': 'nvrtc', 'in_memory': True},
+#    # this run will force recompilation
+#    {'backend': 'nvrtc', 'in_memory': True, 'clean_up': True},
     # Below is the same set of NVRTC tests, with Jitify turned on. For tests
     # that can already pass, it shouldn't matter whether Jitify is on or not,
     # and the only side effect is to add overhead. It doesn't make sense to
@@ -405,8 +405,6 @@ class TestRaw(unittest.TestCase):
         assert self.dev != 1
         if not hasattr(self, 'jitify'):
             self.jitify = False
-        if cupy.cuda.runtime.is_hip and self.jitify:
-            self.skipTest('Jitify does not support ROCm/HIP')
 
         self.temporary_cache_dir_context = use_temporary_cache_dir()
         self.in_memory_context = compile_in_memory(self.in_memory)
@@ -636,6 +634,9 @@ class TestRaw(unittest.TestCase):
         if self.backend == 'nvrtc' and not cupy.cuda.runtime.is_hip:
             # raised when calling ls.complete()
             error = cupy.cuda.driver.CUDADriverError
+        elif (self.jitify and self.backend == 'nvrtc'
+              and cupy.cuda.runtime.is_hip):
+            error = cupy.cuda.compiler.JitifyException
         else:  # nvcc, hipcc, hiprtc
             error = cupy.cuda.compiler.CompileException
         with pytest.raises(error):
@@ -1228,8 +1229,6 @@ __global__ void shift (T* a, int N) {
 @testing.parameterize(*testing.product({
     'jitify': (False, True),
 }))
-@unittest.skipIf(cupy.cuda.runtime.is_hip,
-                 'Jitify does not support ROCm/HIP')
 class TestRawJitify(unittest.TestCase):
 
     def setUp(self):
@@ -1271,8 +1270,8 @@ class TestRawJitify(unittest.TestCase):
         # simply prepend an unused header
         hdr = '#include <cupy/cub/cub/block/block_reduce.cuh>\n'
 
-        if self.jitify:
-            # Jitify will make it work
+        if self.jitify or cupy.cuda.runtime.is_hip:
+            # Jitify will make it work, so will hipRTC
             self._helper(hdr)
         else:
             # NVRTC cannot find C++ std headers without Jitify

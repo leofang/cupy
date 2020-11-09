@@ -35,8 +35,11 @@ cdef function.Function _create_cub_reduction_function(
     if runtime._is_hip_environment:
         # In ROCm, we need to set the include path. This does not work for
         # hiprtc as of ROCm 3.5.0, so we must use hipcc.
-        options += ('-I' + _rocm_path + '/include', '-O2')
-        backend = 'nvcc'  # this is confusing...
+        #options += ('-I' + _rocm_path + '/include', '-O2')
+        #backend = 'nvcc'  # this is confusing...
+
+        options += ('-DCUPY_USE_JITIFY', '-I' + _rocm_path + '/include',)# '-O2')
+        backend = 'nvrtc'  # this is confusing...
     else:
         # use jitify + nvrtc
         # TODO(leofang): how about simply specifying jitify=True when calling
@@ -209,6 +212,7 @@ __global__ void ${name}(${params}) {
     # To specify the backend, we have to explicitly spell out the default
     # values for arch, cachd, and prepend_cupy_headers to bypass cdef/cpdef
     # limitation...
+    print(module_code)
     module = compile_with_cache(
         module_code, options, arch=None, cachd_dir=None,
         prepend_cupy_headers=True, backend=backend)

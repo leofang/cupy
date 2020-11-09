@@ -14,7 +14,8 @@ from cupy_backends.cuda.api import runtime
 from cupy_backends.cuda.libs import nvrtc
 from cupy import _util
 
-if not runtime.is_hip and driver.get_build_version() > 0:
+if runtime.is_hip or driver.get_build_version() > 0:
+    # this can be imported for both CUDA and HIP builds, but not RTD
     from cupy.cuda.jitify import jitify
 
 
@@ -162,6 +163,7 @@ def _jitify_prep(source, options, cu_path):
 
     # jitify requires the 1st line to be the program name
     source = cu_path + '\n' + source
+    #print(source)
 
     # Upon failure, in addition to throw an error Jitify also prints the log
     # to stdout. In principle we could intercept that by hijacking stdout's
@@ -375,11 +377,23 @@ def compile_with_cache(
         _get_bool_env_variable('CUPY_CACHE_IN_MEMORY', False)
         and backend == 'nvrtc')
 
+    is_jitify_requested = ('-DCUPY_USE_JITIFY' in options)
+    if jitify and not is_jitify_requested:
+        # jitify is set in RawKernel/RawModule, translate it to an option
+        # that is useless to the compiler, but can be used as part of the
+        # hash key
+        options += ('-DCUPY_USE_JITIFY',)
+    elif is_jitify_requested and not jitify:
+        # jitify is requested internally, just set the flag
+        jitify = True
+    if jitify and backend != 'nvrtc':  # TODO(leofang): fix for HIP
+        raise ValueError('jitify only works with NVRTC')
+
     if runtime.is_hip:
         backend = 'hiprtc' if backend == 'nvrtc' else 'hipcc'
         return _compile_with_cache_hip(
             source, options, arch, cache_dir, extra_source, backend,
-            name_expressions, log_stream, cache_in_memory)
+            name_expressions, log_stream, cache_in_memory, jitify)
     else:
         return _compile_with_cache_cuda(
             source, options, arch, cache_dir, extra_source, backend,
@@ -408,18 +422,6 @@ def _compile_with_cache_cuda(
 
     if _get_bool_env_variable('CUPY_CUDA_COMPILE_WITH_DEBUG', False):
         options += ('--device-debug', '--generate-line-info')
-
-    is_jitify_requested = ('-DCUPY_USE_JITIFY' in options)
-    if jitify and not is_jitify_requested:
-        # jitify is set in RawKernel/RawModule, translate it to an option
-        # that is useless to the compiler, but can be used as part of the
-        # hash key
-        options += ('-DCUPY_USE_JITIFY',)
-    elif is_jitify_requested and not jitify:
-        # jitify is requested internally, just set the flag
-        jitify = True
-    if jitify and backend != 'nvrtc':
-        raise ValueError('jitify only works with NVRTC')
 
     env = (arch, options, _get_nvrtc_version(), backend)
     base = _empty_file_preprocess_cache.get(env, None)
@@ -669,6 +671,7 @@ def _convert_to_hip_source(source, extra_source, is_hiprtc):
     for i, j in table:
         source = source.replace(i, j)
     if not is_hiprtc:
+        print("EARLY RETURN!!!")
         return '#include <hip/hip_runtime.h>\n' + source
 
     # Workaround for hiprtc: it does not follow the -I option to search
@@ -694,7 +697,7 @@ def _convert_to_hip_source(source, extra_source, is_hiprtc):
 def _compile_with_cache_hip(source, options, arch, cache_dir, extra_source,
                             backend='hiprtc', name_expressions=None,
                             log_stream=None, cache_in_memory=False,
-                            use_converter=True):
+                            jitify=False, use_converter=True):
     global _empty_file_preprocess_cache
 
     # TODO(leofang): this might be possible but is currently undocumented
@@ -711,8 +714,15 @@ def _compile_with_cache_hip(source, options, arch, cache_dir, extra_source,
         if arch is None:
             raise RuntimeError('HCC_AMDGPU_TARGET is not set')
     if use_converter:
+        print("jitify:", jitify)
+        if backend == 'hiprtc':
+            is_hiprtc = False if jitify else True
+        else:
+            is_hiprtc = False
+        print("is_hiprtc: ", is_hiprtc)
         source = _convert_to_hip_source(source, extra_source,
-                                        is_hiprtc=(backend == 'hiprtc'))
+                                        is_hiprtc=is_hiprtc)
+        #print(source)
 
     env = (arch, options, _get_hipcc_version())
     base = _empty_file_preprocess_cache.get(env, None)
@@ -755,7 +765,7 @@ def _compile_with_cache_hip(source, options, arch, cache_dir, extra_source,
         # compile_using_nvrtc calls hiprtc for hip builds
         binary, mapping = compile_using_nvrtc(
             source, options, arch, name + '.cu', name_expressions,
-            log_stream, cache_in_memory)
+            log_stream, cache_in_memory, jitify)
         mod._set_mapping(mapping)
     else:
         binary = compile_using_hipcc(source, options, arch, log_stream)
