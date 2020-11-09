@@ -286,6 +286,20 @@ else:
         'version_method': build.get_nccl_version,
     })
 
+    MODULES.append({
+        'name': 'jitify',
+        'file': [
+            'cupy.cuda.jitify',
+        ],
+        'include': [
+            'hip/hip_runtime_api.h',
+            'hip/hiprtc.h',
+        ],
+        'libraries': [
+            'amdhip64',  # was hiprtc and hip_hcc before ROCm 3.8.0
+        ],
+    })
+
 if bool(int(os.environ.get('CUPY_SETUP_ENABLE_THRUST', 1))):
     if use_hip:
         MODULES.append({
@@ -587,7 +601,11 @@ def make_extensions(options, compiler, use_cython):
 
         # this fixes RTD (no_cuda) builds...
         if module['name'] == 'jitify':
-            compile_args.append('--std=c++11')
+            if no_cuda:
+                compile_args.append('--std=c++11')
+            if use_hip:
+                # include stubs from cupy_backends
+                s['include_dirs'].append(os.path.dirname(__file__))
 
         original_s = s
         for f in module['file']:

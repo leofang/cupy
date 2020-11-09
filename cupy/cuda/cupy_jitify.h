@@ -5,7 +5,17 @@
 
 #include <cupy/jitify/jitify.hpp>
 
-#else
+#elif defined(CUPY_USE_HIP)
+
+// At build time, we comment out the includes <cuda.h>, <cuda_runtime.h>, and
+// <nvrtc.h> in jitify.hpp, so we supply our CUDA->HIP stubs here
+#include <cupy_backends/cuda/cupy_cuda.h>
+#include <cupy_backends/cuda/cupy_cuda_runtime.h>
+#include <cupy_backends/cuda/cupy_nvrtc.h>
+
+#include <cupy/jitify/jitify.hpp>
+
+#else  // CUPY_NO_CUDA
 
 namespace jitify {
 namespace detail {

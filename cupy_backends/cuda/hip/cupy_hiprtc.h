@@ -7,6 +7,8 @@ extern "C" {
 
 typedef hiprtcResult nvrtcResult;
 const nvrtcResult NVRTC_SUCCESS = HIPRTC_SUCCESS;
+const nvrtcResult NVRTC_ERROR_INVALID_OPTION = HIPRTC_ERROR_INVALID_OPTION;
+const nvrtcResult NVRTC_ERROR_COMPILATION = HIPRTC_ERROR_COMPILATION;
 
 typedef hiprtcProgram nvrtcProgram;
 

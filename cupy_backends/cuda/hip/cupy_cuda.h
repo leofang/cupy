@@ -76,6 +76,12 @@ CUresult cuModuleLoadData(CUmodule *module, const void *image) {
     return hipModuleLoadData(module, image);
 }
 
+CUresult cuModuleLoadDataEx(CUmodule *module, const void *image, unsigned int numOptions, CUjit_option *options, void **optionValues) {
+    // HIP does not support JIT options as of ROCm 3.9.0:
+    // https://rocmdocs.amd.com/en/latest/ROCm_API_References/HIP_API/Initialization-and-Version.html#hipmoduleloaddataex
+    return hipModuleLoadData(module, image);
+}
+
 CUresult cuModuleUnload(CUmodule module) {
     return hipModuleUnload(module);
 }
@@ -164,6 +170,10 @@ CUresult cuOccupancyMaxActiveBlocksPerMultiprocessor(...) {
 }
 
 CUresult cuOccupancyMaxPotentialBlockSize(...) {
+    return hipErrorUnknown;
+}
+
+CUresult cuOccupancyMaxPotentialBlockSizeWithFlags(...) {
     return hipErrorUnknown;
 }
 

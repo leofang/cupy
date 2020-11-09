@@ -16,8 +16,16 @@ extern "C" {
 typedef int CUdevice;
 typedef hipError_t CUresult;
 const CUresult CUDA_SUCCESS = static_cast<CUresult>(0);
+const CUresult CUDA_ERROR_FILE_NOT_FOUND = static_cast<CUresult>(301);
 enum CUjit_option {};
-enum CUjitInputType {};
+enum CUjitInputType {
+  CU_JIT_INPUT_CUBIN = 0,
+  CU_JIT_INPUT_PTX,
+  CU_JIT_INPUT_FATBINARY,
+  CU_JIT_INPUT_OBJECT,
+  CU_JIT_INPUT_LIBRARY,
+  CU_JIT_NUM_INPUT_TYPES,
+};
 enum CUarray_format {};
 enum CUaddress_mode {};
 enum CUfilter_mode {};
@@ -33,6 +41,7 @@ typedef hipFunction_t CUfunction;
 typedef hipFunction_attribute CUfunction_attribute;
 typedef hipModule_t CUmodule;
 typedef hipStream_t cudaStream_t;
+typedef hipStream_t CUstream;
 typedef struct CUlinkState_st* CUlinkState;
 typedef struct CUtexref_st* CUtexref;
 typedef struct CUarray_st* CUarray;
@@ -48,13 +57,6 @@ struct CUDA_ARRAY_DESCRIPTOR {
 // cuda_runtime.h
 ///////////////////////////////////////////////////////////////////////////////
 
-enum {
-    cudaDevAttrComputeCapabilityMajor
-        = hipDeviceAttributeComputeCapabilityMajor,
-    cudaDevAttrComputeCapabilityMinor
-        = hipDeviceAttributeComputeCapabilityMinor,
-};
-
 typedef hipError_t cudaError_t;
 const CUresult cudaSuccess = static_cast<CUresult>(0);
 const CUresult cudaErrorInvalidValue = hipErrorInvalidValue;
@@ -62,6 +64,8 @@ const CUresult cudaErrorMemoryAllocation = hipErrorMemoryAllocation;
 const CUresult cudaErrorPeerAccessAlreadyEnabled = hipErrorPeerAccessAlreadyEnabled;
 typedef enum {} cudaDataType;
 typedef hipDeviceAttribute_t cudaDeviceAttr;
+const cudaDeviceAttr cudaDevAttrComputeCapabilityMajor = hipDeviceAttributeComputeCapabilityMajor;
+const cudaDeviceAttr cudaDevAttrComputeCapabilityMinor = hipDeviceAttributeComputeCapabilityMinor;
 typedef hipLimit_t cudaLimit;
 enum cudaMemoryAdvise {};
 typedef hipMemcpyKind cudaMemcpyKind;
