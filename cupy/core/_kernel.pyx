@@ -620,27 +620,6 @@ cdef list _get_out_args_with_params(
     return out_args
 
 
-@_util.memoize(for_each_device=True)
-def _get_elementwise_kernel(
-        tuple arginfos, _TypeMap type_map, tuple params, operation, name,
-        preamble, **kwargs):
-    cdef _ArgInfo arginfo
-
-    op = []
-    for p, arginfo in zip(params, arginfos):
-        if arginfo.is_ndarray() and not p.raw:
-            if p.is_const:
-                fmt = 'const {t} &{n} = _raw_{n}[_ind.get()];'
-            else:
-                fmt = '{t} &{n} = _raw_{n}[_ind.get()];'
-            op.append(fmt.format(t=p.ctype, n=p.name))
-    op.append(operation)
-    operation = '\n'.join(op)
-    return _get_simple_elementwise_kernel(
-        params, arginfos, operation, name, type_map,
-        preamble, **kwargs)
-
-
 cdef class ElementwiseKernel:
 
     """User-defined elementwise kernel.
@@ -836,51 +815,33 @@ cdef class ElementwiseKernel:
 
     cpdef function.Function _get_elementwise_kernel(
             self, int dev_id, tuple arginfos, _TypeMap type_map):
-        key = (
-            dev_id,
-            arginfos,
-            type_map)
+        cdef tuple key = (dev_id, arginfos, type_map)
+        cdef function.Function kern
+        cdef list op = []
+        cdef _ArgInfo arginfo
+        cdef str fmt, operation
+
         kern = self._elementwise_kernel_memo.get(key, None)
         if kern is not None:
             return kern
-        kern = _get_elementwise_kernel(
-            arginfos, type_map, self.params, self.operation,
-            self.name, self.preamble, **self.kwargs)
 
-        # Store the compiled kernel in the cache.
-        # Potentially overwrite a duplicate cache entry because
-        # _get_elementwise_kernel() may include IO wait.
+        for p, arginfo in zip(self.params, arginfos):
+            if arginfo.is_ndarray() and not p.raw:
+                if p.is_const:
+                    fmt = 'const {t} &{n} = _raw_{n}[_ind.get()];'
+                else:
+                    fmt = '{t} &{n} = _raw_{n}[_ind.get()];'
+                op.append(fmt.format(t=p.ctype, n=p.name))
+        op.append(self.operation)
+        operation = '\n'.join(op)
+
+        kern = _get_simple_elementwise_kernel(
+            self.params, arginfos, operation, self.name, type_map,
+            self.preamble, **self.kwargs)
+        # Store the compiled kernel in the cache
         self._elementwise_kernel_memo[key] = kern
+
         return kern
-
-
-cdef function.Function _get_ufunc_kernel(
-        tuple in_types, tuple out_types, routine, tuple arginfos, params,
-        name, preamble, loop_prep):
-    cdef _ArgInfo arginfo
-
-    types = []
-    op = []
-    for i, x in enumerate(in_types):
-        types.append(('in%d_type' % i, x))
-        arginfo = arginfos[i]
-        if arginfo.is_ndarray():
-            op.append(
-                'const in{0}_type in{0}(_raw_in{0}[_ind.get()]);'
-                .format(i))
-
-    for i, x in enumerate(out_types):
-        arginfo = arginfos[i + len(in_types)]
-        types.append(('out%d_type' % i, arginfo.dtype))
-        op.append('out{0}_type &out{0} = _raw_out{0}[_ind.get()];'.format(i))
-    type_map = _TypeMap(tuple(types))
-
-    op.append(routine)
-    operation = '\n'.join(op)
-
-    return _get_simple_elementwise_kernel(
-        params, arginfos, operation, name, type_map, preamble,
-        loop_prep=loop_prep)
 
 
 cdef inline bint _check_should_use_min_scalar(list in_args) except? -1:
@@ -941,6 +902,7 @@ cdef class ufunc:
         readonly _Ops _ops  # normal routines
         # routines based on explicitly given output dtype
         readonly _Ops _out_ops
+        readonly object routine
         readonly object _preamble
         readonly object _loop_prep
         readonly object _default_casting
@@ -1018,6 +980,7 @@ cdef class ufunc:
         cdef function.Function kern
         cdef list broad_values
         cdef shape_t shape
+        cdef tuple arginfos
         cdef Py_ssize_t s
 
         out = kwargs.pop('out', None)
@@ -1080,9 +1043,9 @@ cdef class ufunc:
         indexer = _carray._indexer_init(shape)
         inout_args.append(indexer)
         arginfos = _get_arginfos(inout_args)
+        type_map = self._get_typemap_routine_from_op(op, arginfos)
 
-        kern = self._get_ufunc_kernel(dev_id, op, arginfos)
-
+        kern = self._get_ufunc_kernel(dev_id, arginfos, type_map)
         kern.linear_launch(indexer.size, inout_args)
         return ret
 
@@ -1097,16 +1060,52 @@ cdef class ufunc:
                 inout_type_words.append(dtype.rstrip('0123456789'))
         return '{}__{}'.format(self.name, '_'.join(inout_type_words))
 
+    cdef _TypeMap _get_typemap_routine_from_op(self, _Op op, tuple arginfos):
+        cdef _TypeMap type_map
+        cdef list types = []
+        cdef int i
+
+        for i, x in enumerate(op.in_types):
+            types.append(('in%d_type' % i, x))
+        for i, x in enumerate(op.out_types):
+            arginfo = arginfos[i + len(op.in_types)]
+            types.append(('out%d_type' % i, arginfo.dtype))
+        type_map = _TypeMap(tuple(types))
+        self.routine = op.routine
+        return type_map
+
     cdef function.Function _get_ufunc_kernel(
-            self, int dev_id, _Op op, tuple arginfos):
+            self, int dev_id, tuple arginfos, _TypeMap type_map):
+        # TODO(leofang): change signature to (dev_id, arginfos, type_map, use_cub)
         cdef function.Function kern
-        key = (dev_id, op, arginfos)
+        cdef list op = []
+        cdef tuple key = (dev_id, arginfos, type_map)
+        cdef str name, operation
+        cdef _ArgInfo arginfo
+        cdef int i, j
+
         kern = self._kernel_memo.get(key, None)
         if kern is None:
             name = self._get_name_with_type(arginfos)
-            kern = _get_ufunc_kernel(
-                op.in_types, op.out_types, op.routine, arginfos,
-                self._params, name, self._preamble, self._loop_prep)
+            for i, arginfo in enumerate(arginfos):
+                if i < self.nin:  # for input
+                    j = i
+                    if arginfo.is_ndarray():
+                        fmt = 'const in{0}_type in{0}(_raw_in{0}[_ind.get()]);'
+                    else:
+                        fmt = ''
+                elif i < self.nargs:  # for output
+                    j = i - self.nin
+                    fmt = 'out{0}_type &out{0} = _raw_out{0}[_ind.get()];'
+                else:  # indexer, etc
+                    break
+                op.append(fmt.format(j))
+            op.append(self.routine)
+            operation = '\n'.join(op)
+
+            kern = _get_simple_elementwise_kernel(
+                self._params, arginfos, operation, name, type_map,
+                self._preamble, loop_prep=self._loop_prep)
             self._kernel_memo[key] = kern
         return kern
 
