@@ -136,7 +136,7 @@ cdef inline CPointer _pointer(x):
     raise TypeError('Unsupported type %s. (size=%d)', type(x), itemsize)
 
 
-cdef inline size_t _get_stream(stream) except *:
+cdef inline intptr_t _get_stream(stream) except*:
     if stream is None:
         return stream_module.get_current_stream_ptr()
     else:

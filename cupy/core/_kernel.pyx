@@ -795,8 +795,8 @@ cdef class ElementwiseKernel:
             shape = _reduce_dims(inout_args, self.params, shape)
         indexer = _carray._indexer_init(shape)
         inout_args.append(indexer)
-
         arginfos = _get_arginfos(inout_args)
+
         kern = self._get_elementwise_kernel(dev_id, arginfos, type_map)
         kern.linear_launch(indexer.size, inout_args, shared_mem=0,
                            block_max_size=block_size, stream=stream)
@@ -1043,7 +1043,16 @@ cdef class ufunc:
         indexer = _carray._indexer_init(shape)
         inout_args.append(indexer)
         arginfos = _get_arginfos(inout_args)
-        type_map = self._get_typemap_routine_from_op(op, arginfos)
+        type_map = self._get_typemap_from_op(op, arginfos)
+        self.routine = op.routine
+
+        # Try to use CUB
+        for accelerator in _accelerator._routine_accelerators:
+            if try_use_cub and accelerator == _accelerator.ACCELERATOR_CUB:
+                cub_success = _cub_elementwise._try_to_call_cub_elementwise(
+                    self, dev_id, arginfos, type_map)
+                if cub_success:
+                    return ret
 
         kern = self._get_ufunc_kernel(dev_id, arginfos, type_map)
         kern.linear_launch(indexer.size, inout_args)
@@ -1060,7 +1069,7 @@ cdef class ufunc:
                 inout_type_words.append(dtype.rstrip('0123456789'))
         return '{}__{}'.format(self.name, '_'.join(inout_type_words))
 
-    cdef _TypeMap _get_typemap_routine_from_op(self, _Op op, tuple arginfos):
+    cdef _TypeMap _get_typemap_from_op(self, _Op op, tuple arginfos):
         cdef _TypeMap type_map
         cdef list types = []
         cdef int i
@@ -1071,7 +1080,6 @@ cdef class ufunc:
             arginfo = arginfos[i + len(op.in_types)]
             types.append(('out%d_type' % i, arginfo.dtype))
         type_map = _TypeMap(tuple(types))
-        self.routine = op.routine
         return type_map
 
     cdef function.Function _get_ufunc_kernel(
