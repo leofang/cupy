@@ -1,4 +1,4 @@
-from cupy.random import _generator
+from cupy.random import _random_state
 
 
 def shuffle(a):
@@ -11,7 +11,7 @@ def shuffle(a):
                  <numpy.random.mtrand.RandomState.shuffle>`
 
     """
-    rs = _generator.get_random_state()
+    rs = _random_state.get_random_state()
     return rs.shuffle(a)
 
 
@@ -29,5 +29,5 @@ def permutation(a):
     .. seealso:: :meth:`numpy.random.permutation
                  <numpy.random.mtrand.RandomState.permutation>`
     """
-    rs = _generator.get_random_state()
+    rs = _random_state.get_random_state()
     return rs.permutation(a)
