@@ -448,8 +448,9 @@ def _inclusive_scan_kernel_shfl(src_dtype, dtype, block_size, op, src_c_cont,
                     src_c_cont=src_c_cont, out_c_cont=out_c_cont)
     if runtime._is_hip_environment:
         source = r'''
-            #define __shfl_up_sync __shfl_up
-            #define __shfl_down_sync __shfl_down
+            // ignore mask
+            #define __shfl_up_sync(x, y, z) __shfl_up(y, z)
+            #define __shfl_down_sync(x, y, z) __shfl_down(y, z)
             ''' + source
     module = compile_with_cache(source)
     return module.get_function(name)
