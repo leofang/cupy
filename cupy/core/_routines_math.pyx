@@ -442,9 +442,15 @@ def _inclusive_scan_kernel_shfl(src_dtype, dtype, block_size, op, src_c_cont,
         if (idx2 < n) dst[idx2] = v2;
     }
     """).substitute(name=name, dtype=dtype, block_size=block_size,
-                    warp_size=32, src_dtype=src_dtype,
+                    warp_size=32 if not runtime._is_hip_environment else 64,
+                    src_dtype=src_dtype,
                     op=op_char[op], identity=identity[op],
                     src_c_cont=src_c_cont, out_c_cont=out_c_cont)
+    if runtime._is_hip_environment:
+        source = r'''
+            #define __shfl_up_sync __shfl_up
+            #define __shfl_down_sync __shfl_down
+            ''' + source
     module = compile_with_cache(source)
     return module.get_function(name)
 
@@ -532,8 +538,8 @@ cdef ndarray scan(ndarray a, op, dtype=None, ndarray out=None):
 
     cdef int src_cont = int(a._c_contiguous)
     cdef int out_cont = int(out._c_contiguous)
-    if (numpy.dtype(dtype).char in 'iIlLqQfd' and
-            not runtime._is_hip_environment):
+    cdef str warp_dtypes = 'iIlLqQfd' if not runtime._is_hip_environment else 'if'
+    if numpy.dtype(dtype).char in warp_dtypes:
         kern_scan = _inclusive_scan_kernel_shfl(a.dtype, dtype, block_size, op,
                                                 src_cont, out_cont)
     else:
