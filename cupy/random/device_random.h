@@ -1,26 +1,20 @@
-#ifndef _CUPY_TEST_H
-#define _CUPY_TEST_H
+#ifndef CUPY_DEVICE_RANDOM_H
+#define CUPY_DEVICE_RANDOM_H
 
-#if CUPY_USE_HIP
-
-#include <hiprand/hiprand_kernel.h>
-
-typedef hiprandState curandState;
-typedef hiprandStateMRG32k3a {} curandStateMRG32k3a;
-typedef hiprandStatePhilox4_32_10_t {} curandStatePhilox4_32_10_t;
-
-# else
-
-#ifndef CUPY_NO_CUDA
-
-#include <curand_kernel.h>
-
-# else 
+#ifdef CUPY_NO_CUDA
 
 typedef struct {} curandState;
 typedef struct {} curandStateMRG32k3a;
 typedef struct {} curandStatePhilox4_32_10_t;
+size_t get_curandState_size(...) { return 0; }
+size_t get_curandStateMRG32k3a_size(...) { return 0; }
+size_t get_curandStatePhilox4_32_10_t_size(...) { return 0; }
 
-#endif
-#endif
-#endif
+#else
+
+size_t get_curandState_size();
+size_t get_curandStateMRG32k3a_size();
+size_t get_curandStatePhilox4_32_10_t_size();
+
+#endif  // CUPY_NO_CUDA
+#endif  // CUPY_DEVICE_RANDOM_H

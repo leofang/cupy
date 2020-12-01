@@ -87,7 +87,7 @@ cuda_files = [
     'cupy.fft._cache',
     'cupy.fft._callback',
     'cupy.lib._polynomial',
-    'cupy.random._bit_generator',
+    ('cupy.random._bit_generator', ['cupy/random/device_random.cu']),
     'cupy.random._generator',
     'cupy._util'
 ]

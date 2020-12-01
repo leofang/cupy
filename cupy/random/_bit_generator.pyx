@@ -14,12 +14,9 @@ from cupy.random._distributions_module import _initialize_generator
 # We need access to the sizes here, so this is why we have this header
 # in here instead of cupy backends
 cdef extern from 'device_random.h' nogil:
-    cppclass curandState:
-        pass
-    cppclass curandStateMRG32k3a:
-        pass
-    cppclass curandStatePhilox4_32_10_t:
-        pass
+    size_t get_curandState_size()
+    size_t get_curandStateMRG32k3a_size()
+    size_t get_curandStatePhilox4_32_10_t_size()
 
 
 class BitGenerator:
@@ -135,7 +132,7 @@ class XORWOW(_cuRANDGenerator):
             defaults to 1000 * 256.
     """
     def _type_size(self):
-        return sizeof(curandState)
+        return get_curandState_size()
 
     def _c_layer_generator(self):
         return "curand_pseudo_state<curandState>"
@@ -157,7 +154,7 @@ class MRG32k3a(_cuRANDGenerator):
             defaults to 1000 * 256.
     """
     def _type_size(self):
-        return sizeof(curandStateMRG32k3a)
+        return get_curandStateMRG32k3a_size()
 
     def _c_layer_generator(self):
         return "curand_pseudo_state<curandStateMRG32k3a>"
@@ -179,7 +176,7 @@ class Philox4x3210(_cuRANDGenerator):
             defaults to 1000 * 256.
     """
     def _type_size(self):
-        return sizeof(curandStatePhilox4_32_10_t)
+        return get_curandStatePhilox4_32_10_t_size()
 
     def _c_layer_generator(self):
         return "curand_pseudo_state<curandStatePhilox4_32_10_t>"
