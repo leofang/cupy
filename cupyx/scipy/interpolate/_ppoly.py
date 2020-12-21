@@ -1,41 +1,29 @@
-"""
-Routines for evaluating and manipulating piecewise polynomials in
-local power basis.
-
-"""
-
 import numpy as np
 
-cimport cython
+#cimport cython
+#
+#cimport libc.stdlib
+#cimport libc.math
+#
+#
+#ctypedef double complex double_complex
+#
+#cdef extern from "numpy/npy_math.h":
+#    double nan "NPY_NAN"
+#
+#DEF MAX_DIMS = 64
 
-cimport libc.stdlib
-cimport libc.math
-
-
-ctypedef double complex double_complex
-
-ctypedef fused double_or_complex:
-    double
-    double complex
-
-cdef extern from "numpy/npy_math.h":
-    double nan "NPY_NAN"
-
-DEF MAX_DIMS = 64
 
 #------------------------------------------------------------------------------
 # Piecewise power basis polynomials
 #------------------------------------------------------------------------------
 
-@cython.wraparound(False)
-@cython.boundscheck(False)
-@cython.cdivision(True)
-def evaluate(double_or_complex[:,:,::1] c,
-             const double[::1] x,
-             const double[::1] xp,
-             int dx,
-             bint extrapolate,
-             double_or_complex[:,::1] out):
+def evaluate(c,  # double or complex
+             x,  # double
+             xp,  # double
+             dx,  # int 
+             extrapolate,  # bool
+             out):  # double or complex
     """
     Evaluate a piecewise polynomial.
 
@@ -107,12 +95,9 @@ def evaluate(double_or_complex[:,:,::1] c,
 # TODO(leofang): Add evaluate_nd
 
 
-@cython.wraparound(False)
-@cython.boundscheck(False)
-@cython.cdivision(True)
-def fix_continuity(double_or_complex[:,:,::1] c,
-                   double[::1] x,
-                   int order):
+def fix_continuity(c,  # double or complex
+                   x,  # double
+                   order):  # int
     """
     Make a piecewise polynomial continuously differentiable to given order.
 
@@ -175,9 +160,6 @@ def fix_continuity(double_or_complex[:,:,::1] c,
 # TODO(leofang): Add real_roots
 
 
-@cython.wraparound(False)
-@cython.boundscheck(False)
-@cython.cdivision(True)
 cdef int find_interval_ascending(const double *x,
                                  size_t nx,
                                  double xval,
@@ -260,9 +242,6 @@ cdef int find_interval_ascending(const double *x,
     return interval
 
 
-@cython.wraparound(False)
-@cython.boundscheck(False)
-@cython.cdivision(True)
 cdef int find_interval_descending(const double *x,
                                  size_t nx,
                                  double xval,
@@ -348,9 +327,6 @@ cdef int find_interval_descending(const double *x,
     return interval
 
 
-@cython.wraparound(False)
-@cython.boundscheck(False)
-@cython.cdivision(True)
 cdef double_or_complex evaluate_poly1(double s, double_or_complex[:,:,::1] c, int ci, int cj, int dx) nogil:
     """
     Evaluate polynomial, derivative, or antiderivative in a single interval.
