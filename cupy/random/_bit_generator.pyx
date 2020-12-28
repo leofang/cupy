@@ -8,22 +8,9 @@ from libc.stdint cimport intptr_t, uint64_t, uint32_t
 import cupy
 from cupy.cuda cimport stream
 from cupy.core.core cimport ndarray
+from cupy.random._generator cimport *
+
 from cupy.random._generator import init_curand, random_raw
-
-# We need access to the sizes here, so this is why we have this header
-# in here instead of cupy backends
-cdef extern from 'cupy_distributions.cuh' nogil:
-    cppclass curandState:
-        pass
-    cppclass curandStateMRG32k3a:
-        pass
-    cppclass curandStatePhilox4_32_10_t:
-        pass
-
-    cdef enum _RandGenerators 'RandGenerators':
-        CURAND_XOR_WOW
-        CURAND_MRG32k3a
-        CURAND_PHILOX_4x32_10
 
 
 class BitGenerator:
@@ -138,7 +125,7 @@ class XORWOW(_cuRANDGenerator):
     generator = CURAND_XOR_WOW  # Use The Enum
 
     def _type_size(self):
-        return sizeof(curandState)
+        return sizeof_curandState()
 
 
 class MRG32k3a(_cuRANDGenerator):
@@ -159,7 +146,7 @@ class MRG32k3a(_cuRANDGenerator):
     generator = CURAND_MRG32k3a
 
     def _type_size(self):
-        return sizeof(curandStateMRG32k3a)
+        return sizeof_curandStateMRG32k3a()
 
 
 class Philox4x3210(_cuRANDGenerator):
@@ -180,4 +167,4 @@ class Philox4x3210(_cuRANDGenerator):
     generator = CURAND_PHILOX_4x32_10
 
     def _type_size(self):
-        return sizeof(curandStatePhilox4_32_10_t)
+        return sizeof_curandStatePhilox4_32_10_t()

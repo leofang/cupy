@@ -11,27 +11,18 @@ enum RandGenerators{
    CURAND_PHILOX_4x32_10
 };
 
-#if CUPY_USE_HIP
-
-#include <hiprand/hiprand_kernel.h>
-
-typedef hiprandState curandState;
-typedef hiprandStateMRG32k3a {} curandStateMRG32k3a;
-typedef hiprandStatePhilox4_32_10_t {} curandStatePhilox4_32_10_t;
-
-# else
-
-#ifndef CUPY_NO_CUDA
-#include <curand_kernel.h>
-
+// forward declaration for CUDA/HIP/RTD
 void init_curand_generator(int generator, intptr_t state_ptr, uint64_t seed, ssize_t size, intptr_t stream);
 void raw(int generator, intptr_t state, intptr_t out, ssize_t size, intptr_t stream);
 void interval_32(int generator, intptr_t state, intptr_t out, ssize_t size, intptr_t stream, int32_t mx, int32_t mask);
 void interval_64(int generator, intptr_t state, intptr_t out, ssize_t size, intptr_t stream, int64_t mx, int64_t mask);
 void beta(int generator, intptr_t state, intptr_t out, ssize_t size, intptr_t stream, double a, double b);
 void exponential(int generator, intptr_t state, intptr_t out, ssize_t size, intptr_t stream);
+size_t get_curandState_size();
+size_t get_curandStateMRG32k3a_size();
+size_t get_curandStatePhilox4_32_10_t_size();
 
-# else 
+#if !defined(CUPY_USE_HIP) && defined(CUPY_NO_CUDA)
 
 typedef struct {} curandState;
 typedef struct {} curandStateMRG32k3a;
@@ -44,6 +35,9 @@ void interval_32(int generator, intptr_t state, intptr_t out, ssize_t size, intp
 void interval_64(int generator, intptr_t state, intptr_t out, ssize_t size, intptr_t stream, int64_t mx, int64_t mask) {}
 void beta(int generator, intptr_t state, intptr_t out, ssize_t size, intptr_t stream, double a, double b) {}
 void exponential(int generator, intptr_t state, intptr_t out, ssize_t size, intptr_t stream) {}
-#endif
+
+size_t get_curandState_size(...) { return 0; }
+size_t get_curandStateMRG32k3a_size(...) { return 0; }
+size_t get_curandStatePhilox4_32_10_t_size(...) { return 0; }
 #endif
 #endif

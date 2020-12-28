@@ -3,9 +3,50 @@
 #include <utility>
 #include <iostream>
 
+#include "cupy_distributions.cuh"
+
+#ifdef CUPY_USE_HIP
+
+#include <hip/hip_runtime.h>
+#include <hip/hip_runtime_api.h>
+#include <hiprand/hiprand_kernel.h>
+
+typedef hiprandState curandState;
+typedef hiprandStateMRG32k3a curandStateMRG32k3a;
+typedef hiprandStatePhilox4_32_10_t curandStatePhilox4_32_10_t;
+
+// TODO(leofang): reuse the headers that we already have
+typedef hipStream_t cudaStream_t;
+typedef hipError_t CUresult;
+typedef hipError_t cudaError_t;
+const char* cudaGetErrorString(cudaError_t hipError) {
+    return hipGetErrorString(hipError);
+}
+hipError_t cudaPeekAtLastError() {
+    return hipPeekAtLastError();
+}
+#define cudaDeviceSynchronize hipDeviceSynchronize
+#define curand_init hiprand_init
+template<typename T>
+__host__ __device__ unsigned int curand(T* state) {
+    return hiprand<T>(state);
+}
+template<typename T>
+__host__ __device__ float curand_uniform(T* state) {
+    return hiprand_uniform<T>(state);
+}
+template<typename T>
+__host__ __device__ float curand_normal(T* state) {
+    return hiprand_normal<T>(state);
+}
+
+const CUresult cudaSuccess = static_cast<CUresult>(0);
+
+#elif !defined(CUPY_NO_CUDA)
+
 #include <curand_kernel.h>
 
-#include "cupy_distributions.cuh"
+#endif
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -15,6 +56,18 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
       fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
       if (abort) exit(code);
    }
+}
+
+size_t get_curandState_size() {
+    return sizeof(curandState);
+}
+
+size_t get_curandStateMRG32k3a_size() {
+    return sizeof(curandStateMRG32k3a);
+}
+
+size_t get_curandStatePhilox4_32_10_t_size() {
+    return sizeof(curandStatePhilox4_32_10_t);
 }
 
 struct rk_state {

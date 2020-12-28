@@ -12,6 +12,10 @@ _UINT32_MAX = 0xffffffff
 _UINT64_MAX = 0xffffffffffffffff
 
 cdef extern from 'cupy_distributions.cuh' nogil:
+    size_t get_curandState_size()
+    size_t get_curandStateMRG32k3a_size()
+    size_t get_curandStatePhilox4_32_10_t_size()
+
     void init_curand_generator(
         int generator, intptr_t state_ptr, uint64_t seed,
         ssize_t size, intptr_t stream)
@@ -30,6 +34,16 @@ cdef extern from 'cupy_distributions.cuh' nogil:
     void exponential(
         int generator, intptr_t state, intptr_t out,
         ssize_t size, intptr_t stream)
+
+
+cdef size_t sizeof_curandState():
+    return get_curandState_size()
+
+cdef size_t sizeof_curandStateMRG32k3a():
+    return get_curandStateMRG32k3a_size()
+
+cdef size_t sizeof_curandStatePhilox4_32_10_t():
+    return get_curandStatePhilox4_32_10_t_size()
 
 
 class Generator:
