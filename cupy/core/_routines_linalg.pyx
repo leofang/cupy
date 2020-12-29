@@ -315,9 +315,16 @@ cdef ndarray _integral_tensordot_core(
     #dim_xa = dim_xb = dim_x
     #dim_ya = dim_yb = dim_y
 
-    dim_x = 8
+    #dim_x = 8
+    #dim_y = 8
+    #blk_m = blk_n = 64
+    #blk_k = 8
+    #dim_xa = dim_xb = dim_x
+    #dim_ya = dim_yb = dim_y
+
+    dim_x = 4
     dim_y = 8
-    blk_m = blk_n = 64
+    blk_m = blk_n = 32
     blk_k = 8
     dim_xa = dim_xb = dim_x
     dim_ya = dim_yb = dim_y
