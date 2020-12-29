@@ -298,12 +298,30 @@ cdef ndarray _integral_tensordot_core(
         ndarray a, ndarray b, ndarray out, Py_ssize_t m, Py_ssize_t n,
         Py_ssize_t k, str dtype, const shape_t& ret_shape):
 
-    dim_x = 16
-    dim_y = 16
+    #dim_x=16
+    #dim_y=16
+    #blk_m=64
+    #blk_n=64
+    #blk_k=4
+    #dim_xa=64
+    #dim_ya=4
+    #dim_xb=4
+    #dim_yb=64
+
+    #dim_x = 16
+    #dim_y = 16
+    #blk_m = blk_n = 64
+    #blk_k = 16
+    #dim_xa = dim_xb = dim_x
+    #dim_ya = dim_yb = dim_y
+
+    dim_x = 8
+    dim_y = 8
     blk_m = blk_n = 64
-    blk_k = 16
+    blk_k = 8
     dim_xa = dim_xb = dim_x
     dim_ya = dim_yb = dim_y
+
     config = (('DIM_X', dim_x), ('DIM_Y', dim_y),
               ('BLK_M', blk_m), ('BLK_N', blk_n), ('BLK_K', blk_k),
               ('DIM_XA', dim_xa), ('DIM_YA', dim_ya),
