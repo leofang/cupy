@@ -201,6 +201,10 @@ cdef extern from '../../cupy_backend_runtime.h' nogil:
                                 const ResourceDesc* pResDesc)
     int cudaDestroySurfaceObject(SurfaceObject surObject)
 
+    # Occupancy
+    int cudaOccupancyMaxActiveBlocksPerMultiprocessor(
+        int*, const void*, int, size_t)
+
     bint hip_environment
     int cudaDevAttrComputeCapabilityMajor
     int cudaDevAttrComputeCapabilityMinor
@@ -967,3 +971,17 @@ cdef Pos make_Pos(size_t x, size_t y, size_t z):
 
 cdef PitchedPtr make_PitchedPtr(intptr_t d, size_t p, size_t xsz, size_t ysz):
     return make_cudaPitchedPtr(<void*>d, p, xsz, ysz)
+
+
+##############################################################################
+# Occupancy
+##############################################################################
+
+cpdef int occupancyMaxActiveBlocksPerMultiprocessor(
+        intptr_t func, int blockSize, size_t dynamicSMemSize) except? -1:
+    cdef int numBlocks
+    with nogil:
+        status = cudaOccupancyMaxActiveBlocksPerMultiprocessor(
+            &numBlocks, <const void*>func, blockSize, dynamicSMemSize)
+    check_status(status)
+    return numBlocks

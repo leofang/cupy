@@ -325,6 +325,12 @@ cudaError_t cudaDestroySurfaceObject(...) {
     return cudaSuccess;
 }
 
+// Occupancy
+
+cudaError_t cudaOccupancyMaxActiveBlocksPerMultiprocessor(...) {
+    return cudaSuccess;
+}
+
 } // extern "C"
 
 #endif // #ifndef INCLUDE_GUARD_STUB_CUPY_CUDA_RUNTIME_H

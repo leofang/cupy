@@ -347,6 +347,12 @@ cudaError_t cudaDestroySurfaceObject(cudaSurfaceObject_t surfObject) {
     return hipDestroySurfaceObject(surfObject);
 }
 
+// Occupancy
+
+cudaError_t cudaOccupancyMaxActiveBlocksPerMultiprocessor(int* numBlocks, const void* func, int blockSize, size_t dynamicSMemSize) {
+    return hipOccupancyMaxActiveBlocksPerMultiprocessor(numBlocks, func, blockSize, dynamicSMemSize);
+}
+
 } // extern "C"
 
 #endif // #ifndef INCLUDE_GUARD_HIP_CUPY_RUNTIME_H

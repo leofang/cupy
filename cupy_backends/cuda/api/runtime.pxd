@@ -761,3 +761,11 @@ cdef PitchedPtr make_PitchedPtr(intptr_t d, size_t p, size_t xsz, size_t ysz)
 cpdef uintmax_t createSurfaceObject(intptr_t ResDesc)
 cpdef destroySurfaceObject(uintmax_t surfObject)
 # TODO(leofang): add cudaGetSurfaceObjectResourceDesc
+
+
+##############################################################################
+# Occupancy
+##############################################################################
+
+cpdef int occupancyMaxActiveBlocksPerMultiprocessor(
+    intptr_t func, int blockSize, size_t dynamicSMemSize) except? -1
