@@ -769,3 +769,4 @@ cpdef destroySurfaceObject(uintmax_t surfObject)
 
 cpdef int occupancyMaxActiveBlocksPerMultiprocessor(
     intptr_t func, int blockSize, size_t dynamicSMemSize) except? -1
+cpdef intptr_t getFuncBySymbol(intptr_t func) except? -1

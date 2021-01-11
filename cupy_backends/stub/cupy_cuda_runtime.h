@@ -331,6 +331,10 @@ cudaError_t cudaOccupancyMaxActiveBlocksPerMultiprocessor(...) {
     return cudaSuccess;
 }
 
+cudaError_t cudaGetFuncBySymbol(...) {
+    return cudaSuccess;
+}
+
 } // extern "C"
 
 #endif // #ifndef INCLUDE_GUARD_STUB_CUPY_CUDA_RUNTIME_H

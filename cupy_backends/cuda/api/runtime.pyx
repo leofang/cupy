@@ -13,7 +13,7 @@ import threading
 
 cimport cpython  # NOQA
 cimport cython  # NOQA
-
+cimport cython.operator.dereference as deref
 from cupy_backends.cuda.api cimport driver
 
 
@@ -63,6 +63,7 @@ cdef extern from *:
 
     ctypedef void HostFnDef(void* userData)
     ctypedef HostFnDef* HostFn 'cudaHostFn_t'
+    ctypedef void* Function 'cudaFunction_t'
 
 
 cdef extern from '../../cupy_backend_runtime.h' nogil:
@@ -204,6 +205,7 @@ cdef extern from '../../cupy_backend_runtime.h' nogil:
     # Occupancy
     int cudaOccupancyMaxActiveBlocksPerMultiprocessor(
         int*, const void*, int, size_t)
+    int cudaGetFuncBySymbol(Function*, const void*)
 
     bint hip_environment
     int cudaDevAttrComputeCapabilityMajor
@@ -980,8 +982,20 @@ cdef PitchedPtr make_PitchedPtr(intptr_t d, size_t p, size_t xsz, size_t ysz):
 cpdef int occupancyMaxActiveBlocksPerMultiprocessor(
         intptr_t func, int blockSize, size_t dynamicSMemSize) except? -1:
     cdef int numBlocks
+    cdef void** f = <void**>func
+    cdef intptr_t f2 = <intptr_t>(deref(f))
     with nogil:
         status = cudaOccupancyMaxActiveBlocksPerMultiprocessor(
-            &numBlocks, <const void*>func, blockSize, dynamicSMemSize)
+            &numBlocks, <void*>f2, blockSize, dynamicSMemSize)
     check_status(status)
     return numBlocks
+
+cpdef intptr_t getFuncBySymbol(intptr_t func) except? -1:
+    cdef void* runtime_func
+    IF CUDA_VERSION < 11000:
+        raise RuntimeError("This function is supported since CUDA 11.0")
+    with nogil:
+        status = cudaGetFuncBySymbol(<Function*>(&runtime_func),
+                                     <void*>func)
+    check_status(status)
+    return <intptr_t>runtime_func
