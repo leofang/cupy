@@ -27,6 +27,11 @@ if cupy.cuda.runtime.is_hip:
     'c_contiguous': (True, False),
 }))
 class TestCUDAarray(unittest.TestCase):
+
+    def setUp(self):
+        if runtime.is_hip and self.xp == 'cupy':
+            self.skipTest('HIP d2d memcpy3D is problematic')
+
     def test_array_gen_cpy(self):
         xp = numpy if self.xp == 'numpy' else cupy
         stream = None if not self.stream else cupy.cuda.Stream()
@@ -85,6 +90,10 @@ class TestCUDAarray(unittest.TestCase):
 
 
 source_texobj = r'''
+#ifdef __HIP_DEVICE_COMPILE__
+#define cudaTextureObject_t hipTextureObject_t
+#endif
+
 extern "C"{
 __global__ void copyKernel1Dfetch(float* output,
                                   cudaTextureObject_t texObj,
@@ -257,6 +266,11 @@ __global__ void copyKernel3D_4ch(float* output_x,
     'target': ('object', 'reference'),
 }))
 class TestTexture(unittest.TestCase):
+
+    def setUp(self):
+        if runtime.is_hip and self.target == 'reference':
+            self.skipTest('Texture reference not supported in HIP')
+
     def test_fetch_float_texture(self):
         width, height, depth = self.dimensions
         dim = 3 if depth != 0 else 2 if height != 0 else 1
@@ -282,9 +296,7 @@ class TestTexture(unittest.TestCase):
             arr = CUDAarray(ch, width, height, depth)
             expected_output = cupy.zeros_like(tex_data)
             assert expected_output.flags['C_CONTIGUOUS']
-            # test bidirectional copy
-            arr.copy_from(tex_data)
-            arr.copy_to(expected_output)
+            expected_output[...] = tex_data
         else:  # linear are pitch2D are backed by ndarray
             arr = tex_data
             expected_output = tex_data
