@@ -202,12 +202,12 @@ cudaError_t cudaMemcpy2DToArrayAsync(...) {
     return hipErrorUnknown;
 }
 
-cudaError_t cudaMemcpy3D(...) {
-    return hipErrorUnknown;
+cudaError_t cudaMemcpy3D(const cudaMemcpy3DParms* p) {
+    return hipMemcpy3D(p);
 }
 
-cudaError_t cudaMemcpy3DAsync(...) {
-    return hipErrorUnknown;
+cudaError_t cudaMemcpy3DAsync(const cudaMemcpy3DParms* p, cudaStream_t stream) {
+    return hipMemcpy3DAsync(p, stream);
 }
 
 cudaError_t cudaMemset(void* dst, int value, size_t sizeBytes) {
