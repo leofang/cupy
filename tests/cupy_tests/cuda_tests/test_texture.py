@@ -244,6 +244,11 @@ __global__ void copyKernel3D_4ch(float* output_x,
     'target': ('object', 'reference'),
 }))
 class TestTexture(unittest.TestCase):
+
+    def setUp(self):
+        if runtime.is_hip and self.target == 'reference':
+            self.skipTest('Texture reference not supported in HIP')
+
     def test_fetch_float_texture(self):
         width, height, depth = self.dimensions
         dim = 3 if depth != 0 else 2 if height != 0 else 1
