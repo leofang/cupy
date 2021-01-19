@@ -335,39 +335,42 @@ cudaError_t cudaEventSynchronize(cudaEvent_t event) {
 
 
 // Texture
-cudaError_t cudaCreateTextureObject(...) {
-    return cudaSuccess;
+cudaError_t cudaCreateTextureObject(cudaTextureObject_t *pTexObject,
+                                    const cudaResourceDesc *pResDesc,
+                                    const cudaTextureDesc *pTexDesc,
+                                    const cudaResourceViewDesc *pResViewDesc) {
+    return hipCreateTextureObject(pTexObject, pResDesc, pTexDesc, pResViewDesc);
 }
 
-cudaError_t cudaDestroyTextureObject(...) {
-    return cudaSuccess;
+cudaError_t cudaDestroyTextureObject(cudaTextureObject_t textureObject) {
+    return hipDestroyTextureObject(textureObject);
 }
 
-cudaError_t cudaGetChannelDesc(...) {
-    return cudaSuccess;
+cudaError_t cudaGetChannelDesc(cudaChannelFormatDesc *desc,
+                               const cudaArray_t array) {
+    return hipGetChannelDesc(desc, array);
 }
 
-cudaError_t cudaGetTextureObjectResourceDesc(...) {
-    return cudaSuccess;
+cudaError_t cudaGetTextureObjectResourceDesc(cudaResourceDesc *pResDesc,
+                                             cudaTextureObject_t texObject) {
+    return hipGetTextureObjectResourceDesc(pResDesc, texObject);
 }
 
-cudaError_t cudaGetTextureObjectTextureDesc(...) {
-    return cudaSuccess;
+cudaError_t cudaGetTextureObjectTextureDesc(cudaTextureDesc *pTexDesc,
+                                            cudaTextureObject_t texObject) {
+    return hipGetTextureObjectTextureDesc(pTexDesc, texObject);
 }
 
-cudaExtent make_cudaExtent(...) {
-    cudaExtent ex = {};
-    return ex;
+cudaExtent make_cudaExtent(size_t w, size_t h, size_t d) {
+    return make_hipExtent(w, h, d);
 }
 
-cudaPitchedPtr make_cudaPitchedPtr(...) {
-    cudaPitchedPtr ptr = {};
-    return ptr;
+cudaPitchedPtr make_cudaPitchedPtr(void* d, size_t p, size_t xsz, size_t ysz) {
+    return make_hipPitchedPtr(d, p, xsz, ysz);
 }
 
-cudaPos make_cudaPos(...) {
-    cudaPos pos = {};
-    return pos;
+cudaPos make_cudaPos(size_t x, size_t y, size_t z) {
+    return make_hipPos(x, y, z);
 }
 
 // Surface
