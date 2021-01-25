@@ -25,6 +25,11 @@ dev = cupy.cuda.Device(runtime.getDevice())
               numpy.int32, numpy.uint8, numpy.uint16, numpy.uint32),
 }))
 class TestCUDAarray(unittest.TestCase):
+
+    def setUp(self):
+        if runtime.is_hip and self.xp == 'cupy':
+            self.skipTest('HIP d2d memcpy3D is problematic')
+
     def test_array_gen_cpy(self):
         xp = numpy if self.xp == 'numpy' else cupy
         stream = None if not self.stream else cupy.cuda.Stream()
@@ -72,6 +77,10 @@ class TestCUDAarray(unittest.TestCase):
 
 
 source_texobj = r'''
+#ifdef __HIP_DEVICE_COMPILE__
+#define cudaTextureObject_t hipTextureObject_t
+#endif
+
 extern "C"{
 __global__ void copyKernel1Dfetch(float* output,
                                   cudaTextureObject_t texObj,
@@ -274,9 +283,7 @@ class TestTexture(unittest.TestCase):
             arr = CUDAarray(ch, width, height, depth)
             expected_output = cupy.zeros_like(tex_data)
             assert expected_output.flags['C_CONTIGUOUS']
-            # test bidirectional copy
-            arr.copy_from(tex_data)
-            arr.copy_to(expected_output)
+            expected_output[...] = tex_data
         else:  # linear are pitch2D are backed by ndarray
             arr = tex_data
             expected_output = tex_data
