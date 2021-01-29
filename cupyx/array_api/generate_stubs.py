@@ -136,6 +136,9 @@ def main():
         py_path = os.path.join(stubs_dir, py_file)
         title = filename.replace('.md', '').replace('_', ' ')
         module_name = py_file.replace('.py', '')
+        # TODO(leofang): revisit this once it's settled
+        if module_name == 'linear_algebra_functions':
+            continue
         print(module_name)
         modules[module_name] = []
         if not args.quiet:
@@ -157,7 +160,7 @@ def main():
     """
     Note: {func_name} is a method of the array object.
     """'''
-            print(sig)
+            #print(sig)
             if func_name not in annotations:
                 print(f"Warning: No annotations found for {func_name}")
                 annotated_sig = sig
@@ -165,10 +168,10 @@ def main():
                 no_annotation_sig = strip_annotation_simple(sig)
             else:
                 annotated_sig = add_annotation(sig, annotations[func_name])
-                print('before', annotated_sig)
+                #print('before', annotated_sig)
                 # equivalent: no_annotation_sig = strip_annotation(annotated_sig)
                 no_annotation_sig = strip_annotation_simple(sig)
-                print('after', no_annotation_sig, '\n')
+                #print('after', no_annotation_sig, '\n')
             if module_name == 'array_object':
                 arr_self = 'x' if 'x2' not in no_annotation_sig else 'x1'
                 no_annotation_sig = f'{arr_self}.{no_annotation_sig}'
