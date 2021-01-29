@@ -136,6 +136,7 @@ def main():
         py_path = os.path.join(stubs_dir, py_file)
         title = filename.replace('.md', '').replace('_', ' ')
         module_name = py_file.replace('.py', '')
+        print(module_name)
         modules[module_name] = []
         if not args.quiet:
             print(f"Writing {py_path}")
@@ -145,13 +146,13 @@ def main():
         sigs = {}
         code = ""
         code += STUB_FILE_HEADER.format(filename=filename, title=title)
+        code += 'import cupy\n'
         for sig in functions + methods:
             ismethod = sig in methods
             sig = sig.replace(r'\_', '_')
             func_name = NAME_RE.match(sig).group(1)
             doc = ""
             if ismethod:
-                continue
                 doc = f'''
     """
     Note: {func_name} is a method of the array object.
@@ -160,20 +161,35 @@ def main():
             if func_name not in annotations:
                 print(f"Warning: No annotations found for {func_name}")
                 annotated_sig = sig
-                no_annotatin_sig = sig
+                # this has to be done anyway, because there are markers like / and *
+                no_annotation_sig = strip_annotation_simple(sig)
             else:
                 annotated_sig = add_annotation(sig, annotations[func_name])
                 print('before', annotated_sig)
-                # equivalent: no_annotatin_sig = strip_annotation(annotated_sig)
-                no_annotatin_sig = strip_annotation_simple(sig)
-                print('after', no_annotatin_sig, '\n')
+                # equivalent: no_annotation_sig = strip_annotation(annotated_sig)
+                no_annotation_sig = strip_annotation_simple(sig)
+                print('after', no_annotation_sig, '\n')
+            if module_name == 'array_object':
+                arr_self = 'x' if 'x2' not in no_annotation_sig else 'x1'
+                no_annotation_sig = f'{arr_self}.{no_annotation_sig}'
+            else:
+                no_annotation_sig = f'cupy.{no_annotation_sig}'
             if not args.quiet:
                 print(f"Writing stub for {annotated_sig}")
-            code += f"""
-def {annotated_sig}:{doc}
-    #pass
-    cupy.{no_annotatin_sig}
-"""
+
+            # TODO(leofang): make a more robust template?
+            code += f"\ndef {annotated_sig}:{doc}"
+            if 'device' in annotated_sig:
+                before_dev, _, after_dev = no_annotation_sig.partition(', device')
+                no_annotation_sig = before_dev + after_dev
+                code +=  "\n    if device is None:"
+                code += f"\n        return {no_annotation_sig}"
+                code +=  "\n    else:"
+                code +=  "\n        with device:"
+                code += f"\n            return {no_annotation_sig}\n"
+            else:
+                code += f"\n    return {no_annotation_sig}\n"
+
             modules[module_name].append(func_name)
             sigs[func_name] = sig
         for const in constants + attributes:
@@ -181,7 +197,6 @@ def {annotated_sig}:{doc}
                 print(f"Writing stub for {const}")
             isattr = const in attributes
             if isattr:
-                continue
                 code += f"\n# Note: {const} is an attribute of the array object."
             code += f"\n{const} = None\n"
             modules[module_name].append(const)

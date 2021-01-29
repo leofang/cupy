@@ -10,6 +10,7 @@ https://github.com/data-apis/array-api/blob/master/spec/API_specification/consta
 
 from __future__ import annotations
 
+import cupy
 
 e = None
 

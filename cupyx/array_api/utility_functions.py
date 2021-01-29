@@ -11,13 +11,12 @@ https://github.com/data-apis/array-api/blob/master/spec/API_specification/utilit
 from __future__ import annotations
 
 from ._types import Optional, Tuple, Union, array
+import cupy
 
 def all(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> array:
-    #pass
-    cupy.all(x, axis, keepdims)
+    return cupy.all(x, axis, keepdims)
 
 def any(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> array:
-    #pass
-    cupy.any(x, axis, keepdims)
+    return cupy.any(x, axis, keepdims)
 
 __all__ = ['all', 'any']

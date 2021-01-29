@@ -11,21 +11,18 @@ https://github.com/data-apis/array-api/blob/master/spec/API_specification/search
 from __future__ import annotations
 
 from ._types import Tuple, array
+import cupy
 
 def argmax(x: array, /, *, axis: int = None, keepdims: bool = False) -> array:
-    #pass
-    cupy.argmax(x, axis, keepdims)
+    return cupy.argmax(x, axis, keepdims)
 
 def argmin(x: array, /, *, axis: int = None, keepdims: bool = False) -> array:
-    #pass
-    cupy.argmin(x, axis, keepdims)
+    return cupy.argmin(x, axis, keepdims)
 
 def nonzero(x: array, /) -> Tuple[array, ...]:
-    #pass
-    cupy.nonzero(x)
+    return cupy.nonzero(x)
 
 def where(condition: array, x1: array, x2: array, /) -> array:
-    #pass
-    cupy.where(condition, x1, x2)
+    return cupy.where(condition, x1, x2)
 
 __all__ = ['argmax', 'argmin', 'nonzero', 'where']

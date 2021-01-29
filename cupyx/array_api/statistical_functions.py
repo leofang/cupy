@@ -11,33 +11,27 @@ https://github.com/data-apis/array-api/blob/master/spec/API_specification/statis
 from __future__ import annotations
 
 from ._types import Optional, Tuple, Union, array
+import cupy
 
 def max(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> array:
-    #pass
-    cupy.max(x, axis, keepdims)
+    return cupy.max(x, axis, keepdims)
 
 def mean(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> array:
-    #pass
-    cupy.mean(x, axis, keepdims)
+    return cupy.mean(x, axis, keepdims)
 
 def min(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> array:
-    #pass
-    cupy.min(x, axis, keepdims)
+    return cupy.min(x, axis, keepdims)
 
 def prod(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> array:
-    #pass
-    cupy.prod(x, axis, keepdims)
+    return cupy.prod(x, axis, keepdims)
 
 def std(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, correction: Union[int, float] = 0.0, keepdims: bool = False) -> array:
-    #pass
-    cupy.std(x, axis, correction, keepdims)
+    return cupy.std(x, axis, correction, keepdims)
 
 def sum(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> array:
-    #pass
-    cupy.sum(x, axis, keepdims)
+    return cupy.sum(x, axis, keepdims)
 
 def var(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, correction: Union[int, float] = 0.0, keepdims: bool = False) -> array:
-    #pass
-    cupy.var(x, axis, correction, keepdims)
+    return cupy.var(x, axis, correction, keepdims)
 
 __all__ = ['max', 'mean', 'min', 'prod', 'std', 'sum', 'var']

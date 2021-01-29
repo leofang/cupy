@@ -11,13 +11,12 @@ https://github.com/data-apis/array-api/blob/master/spec/API_specification/sortin
 from __future__ import annotations
 
 from ._types import array
+import cupy
 
 def argsort(x: array, /, *, axis: int = -1, descending: bool = False, stable: bool = True) -> array:
-    #pass
-    cupy.argsort(x, axis, descending, stable)
+    return cupy.argsort(x, axis, descending, stable)
 
 def sort(x: array, /, *, axis: int = -1, descending: bool = False, stable: bool = True) -> array:
-    #pass
-    cupy.sort(x, axis, descending, stable)
+    return cupy.sort(x, axis, descending, stable)
 
 __all__ = ['argsort', 'sort']
