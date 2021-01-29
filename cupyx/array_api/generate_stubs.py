@@ -139,6 +139,9 @@ def main():
         # TODO(leofang): revisit this once it's settled
         if module_name == 'linear_algebra_functions':
             continue
+        # TODO(leofang): this is a bad wrapper, disable it for now:
+        if module_name == 'array_object':
+            continue
         print(module_name)
         modules[module_name] = []
         if not args.quiet:
