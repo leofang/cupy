@@ -27,6 +27,7 @@ cdef extern from '../../cupy_cutensor.h' nogil:
         int64_t fields[640]
     ctypedef struct cutensorContractionFind_t 'cutensorContractionFind_t':
         int64_t fields[64]
+    ctypedef void* cutensorPlanCacheline_t 'cutensorPlanCacheline_t'
 
     const char* cutensorGetErrorString(Status status)
 
@@ -134,6 +135,13 @@ cdef extern from '../../cupy_cutensor.h' nogil:
         cutensorTensorDescriptor_t* desc,
         uint32_t* alignmentReq)
 
+    int cutensorHandleAttachPlanCachelines(
+        cutensorHandle_t* handle,
+        cutensorPlanCacheline_t cachelines[],
+        const uint32_t numCachelines)
+
+    int cutensorHandleDetachPlanCachelines(cutensorHandle_t* handle)
+
     size_t cutensorGetVersion()
 
 
@@ -157,12 +165,24 @@ cdef class Handle:
         self._ptr = PyMem_Malloc(sizeof(cutensorHandle_t))
 
     def __dealloc__(self):
-        PyMem_Free(self._ptr)
-        self._ptr = NULL
+        if self._cache_ptr:
+            handleDetachPlanCachelines(self)
+            PyMem_Free(self._cache_ptr)
+            self._cache_ptr = NULL
+        if self._ptr:
+            PyMem_Free(self._ptr)
+            self._ptr = NULL
+
+    cpdef enable_cache(self, size_t cache_size):
+        self._cache_ptr = <void*>handleAttachPlanCachelines(self, cache_size)
 
     @property
     def ptr(self):
         return <intptr_t>self._ptr
+
+    @property
+    def cache_ptr(self):
+        return <intptr_t>self._cache_ptr
 
 
 cdef class TensorDescriptor:
@@ -875,3 +895,23 @@ cpdef uint32_t getAlignmentRequirement(
         &alignmentRequirement)
     check_status(status)
     return alignmentRequirement
+
+
+###############################################################################
+# Plan cache
+###############################################################################
+
+cpdef intptr_t handleAttachPlanCachelines(Handle handle, size_t numCachelines):
+    cdef size_t sizeCache = numCachelines * sizeof(cutensorPlanCacheline_t)
+    print(f"allocating {sizeCache} bytes for cuTENSOR cache...")
+    cdef cutensorPlanCacheline_t* cachelines
+    cachelines = <cutensorPlanCacheline_t*>PyMem_Malloc(sizeCache)
+    status = cutensorHandleAttachPlanCachelines(
+        <cutensorHandle_t*>handle._ptr, cachelines, numCachelines)
+    check_status(status)
+    return <intptr_t>cachelines
+
+
+cpdef handleDetachPlanCachelines(Handle handle):
+    status = cutensorHandleDetachPlanCachelines(<cutensorHandle_t*>handle._ptr)
+    check_status(status)

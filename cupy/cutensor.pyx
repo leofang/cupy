@@ -1,3 +1,5 @@
+import os
+
 import numpy as _numpy
 import warnings as _warnings
 
@@ -126,6 +128,9 @@ cdef Handle _get_handle():
     if dev not in _handles:
         handle = Handle()
         cutensor.init(handle)
+        cache_lines = int(os.environ.get('CUPY_CUTENSOR_CACHE_SIZE', 0))
+        if cache_lines > 0:
+            handle.enable_cache(cache_lines)
         _handles[dev] = handle
         return handle
     return _handles[dev]
@@ -441,13 +446,15 @@ cdef inline ContractionPlan _create_contraction_plan(
     """Create a contraction plan"""
     cdef ContractionPlan plan
 
-    key = (handle.ptr, desc.ptr, find.ptr, ws_size)
-    if key in _contraction_plans:
-        plan = _contraction_plans[key]
-    else:
-        plan = ContractionPlan()
-        cutensor.initContractionPlan(handle, plan, desc, find, ws_size)
-        _contraction_plans[key] = plan
+    #key = (handle.ptr, desc.ptr, find.ptr, ws_size)
+    #if key in _contraction_plans:
+    #    plan = _contraction_plans[key]
+    #else:
+    #    plan = ContractionPlan()
+    #    cutensor.initContractionPlan(handle, plan, desc, find, ws_size)
+    #    _contraction_plans[key] = plan
+    plan = ContractionPlan()
+    cutensor.initContractionPlan(handle, plan, desc, find, ws_size)
     return plan
 
 

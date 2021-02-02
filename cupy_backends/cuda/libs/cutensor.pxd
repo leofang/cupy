@@ -99,6 +99,8 @@ cpdef size_t get_version()
 cdef class Handle:
 
     cdef void* _ptr
+    cdef void* _cache_ptr
+    cpdef enable_cache(self, size_t cache_size)
 
 
 cdef class TensorDescriptor:
@@ -254,3 +256,7 @@ cpdef uint32_t getAlignmentRequirement(
     Handle handle,
     intptr_t ptr,
     TensorDescriptor desc)
+
+cpdef intptr_t handleAttachPlanCachelines(Handle handle, size_t numCachelines)
+
+cpdef handleDetachPlanCachelines(Handle handle)
