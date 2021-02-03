@@ -6,6 +6,7 @@ from cython.operator cimport dereference as deref
 from libcpp cimport nullptr
 from libcpp.map cimport map as cpp_map
 from libcpp.string cimport string as cpp_str
+from libcpp.unordered_map cimport unordered_map
 from libcpp.vector cimport vector
 
 
@@ -17,15 +18,27 @@ cdef extern from 'cupy_jitify.h' namespace "jitify::detail" nogil:
     cpp_map[cpp_str, cpp_str]& get_jitsafe_headers_map()
     const int preinclude_jitsafe_headers_count
     const char* preinclude_jitsafe_header_names[]
-    void load_program(cpp_str&,
-                      vector[cpp_str]&,
-                      void*,
-                      vector[cpp_str]*,
-                      cpp_map[cpp_str, cpp_str]*,
-                      vector[cpp_str]*,
-                      cpp_str*) except +
 
     const char* jitify_ver  # set at build time
+
+
+cdef extern from 'cupy_jitify.h' namespace "jitify2" nogil:
+    cdef cppclass PreprocessedProgram:
+        @staticmethod
+        PreprocessedProgram preprocess(
+            cpp_str name, cpp_str source,
+            unordered_map[cpp_str, cpp_str] header_sources,
+            vector[cpp_str] compiler_options,
+            vector[cpp_str] linker_options,
+            void* callback)
+
+    #void load_program(cpp_str&,
+    #                  vector[cpp_str]&,
+    #                  void*,
+    #                  vector[cpp_str]*,
+    #                  cpp_map[cpp_str, cpp_str]*,
+    #                  vector[cpp_str]*,
+    #                  cpp_str*) except +
 
 
 ###############################################################################

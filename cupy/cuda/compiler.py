@@ -206,6 +206,7 @@ def _jitify_prep(source, options, cu_path):
         if dump:
             cex.dump(sys.stderr)
         raise JitifyException(str(cex))
+    print(name, cu_path)
     assert name == cu_path
 
     return options, headers, include_names
