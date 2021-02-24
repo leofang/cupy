@@ -1,6 +1,7 @@
 # distutils: language = c++
 
 from libc.stdint cimport intptr_t
+from libcpp.vector cimport vector
 
 import warnings as _warnings
 
@@ -14,6 +15,7 @@ from cupy_backends.cuda.libs.cusolver cimport (  # noqa
     sgesvd_bufferSize, dgesvd_bufferSize, cgesvd_bufferSize, zgesvd_bufferSize)
 
 from cupy.cuda cimport memory
+from cupy.cuda cimport stream
 from cupy.core.core cimport _ndarray_init, ndarray
 
 import cupy as _cupy
@@ -21,6 +23,7 @@ from cupy_backends.cuda.api import driver as _driver
 from cupy_backends.cuda.api import runtime as _runtime
 from cupy_backends.cuda.libs import cublas as _cublas
 from cupy_backends.cuda.libs import cusolver as _cusolver
+from cupy import cuda as _cuda
 from cupy.cuda import device as _device
 from cupy.core import _routines_linalg as _linalg
 from cupy import _util
@@ -41,12 +44,12 @@ cdef extern from '../cupy_backends/cupy_complex.h':
 
 cdef extern from '../cupy_backends/cupy_lapack.h' nogil:
     int gesvd_loop[T](
-        intptr_t handle, char jobu, char jobvt, int m, int n, intptr_t A,
+        vector[intptr_t]& handle, char jobu, char jobvt, int m, int n, intptr_t A,
         intptr_t s_ptr, intptr_t u_ptr, intptr_t vt_ptr,
         intptr_t w_ptr, int buffersize, intptr_t info_ptr,
         int batch_size)
 
-ctypedef int(*gesvd_ptr)(intptr_t, char, char, int, int, intptr_t,
+ctypedef int(*gesvd_ptr)(vector[intptr_t]&, char, char, int, int, intptr_t,
                          intptr_t, intptr_t, intptr_t,
                          intptr_t, int, intptr_t, int) nogil
 
@@ -272,8 +275,6 @@ cpdef _gesvd_batched(a, a_dtype, full_matrices, compute_uv, overwrite_a):
         raise RuntimeError("This function is disabled on HIP as "
                            "it is not needed")
 
-    # TODO(leofang): try overlapping using a small stream pool?
-
     cdef ndarray x, s, u, vt, dev_info
     cdef int n, m, k, batch_size, i, buffersize, d_size, status
     cdef intptr_t a_ptr, s_ptr, u_ptr, vt_ptr, rwork_ptr, w_ptr, info_ptr
@@ -338,18 +339,38 @@ cpdef _gesvd_batched(a, a_dtype, full_matrices, compute_uv, overwrite_a):
 
     # this wrapper also sets the stream for us
     buffersize = gesvd_bufferSize(handle, m, n)
-    # we are on the same stream, so the workspace can be reused in the loop
-    workspace = memory.alloc(buffersize * x.dtype.itemsize)
+
+    cdef int pool_size = 4
+    cdef intptr_t ha
+    cdef vector.vector[intptr_t] handles
+    cdef list streams = []
+    handles.resize(pool_size)
+    current_s = stream.get_current_stream()
+    e = current_s.record()
+    for i in range(pool_size):
+        handles[i] = ha = cusolver.create()
+        st = _cuda.Stream()
+        st.wait_event(e)
+        cusolver.setStream(ha, st.ptr)
+        streams.append(st)
+    workspace = memory.alloc(buffersize * x.dtype.itemsize * pool_size)
     w_ptr = workspace.ptr
 
     # the loop starts here, with gil released to reduce overhead
     with nogil:
         status = gesvd(
-            handle, job_u, job_vt, m, n, a_ptr,
+            handles, job_u, job_vt, m, n, a_ptr,
             s_ptr, u_ptr, vt_ptr,
             w_ptr, buffersize, info_ptr, batch_size)
-    if status != 0:
-        raise _cusolver.CUSOLVERError(status)
+    try:
+        if status != 0:
+            raise _cusolver.CUSOLVERError(status)
+    finally:
+        for i in range(pool_size):
+            cusolver.destroy(handles[i])
+            st = streams[i]
+            e = st.record()
+            current_s.wait_event(e)
 
     # check the full info array
     _cupy.linalg._util._check_cusolver_dev_info_if_synchronization_allowed(

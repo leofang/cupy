@@ -2,6 +2,7 @@
 #define INCLUDE_GUARD_CUPY_CUSOLVER_H
 
 #include <type_traits>
+#include <vector>
 
 #if !defined(CUPY_NO_CUDA) && !defined(CUPY_USE_HIP)
 
@@ -32,7 +33,7 @@ template<> struct gesvd_func<cuDoubleComplex, double> { gesvd<cuDoubleComplex, d
 
 template<typename T>
 int gesvd_loop(
-        intptr_t handle, char jobu, char jobvt, int m, int n, intptr_t a_ptr,
+        std::vector<intptr_t>& handles, char jobu, char jobvt, int m, int n, intptr_t a_ptr,
         intptr_t s_ptr, intptr_t u_ptr, intptr_t vt_ptr,
         intptr_t w_ptr, int buffersize, intptr_t info_ptr,
         int batch_size) {
@@ -52,16 +53,22 @@ int gesvd_loop(
     T* VT = reinterpret_cast<T*>(vt_ptr);
     T* Work = reinterpret_cast<T*>(w_ptr);
     int* devInfo = reinterpret_cast<int*>(info_ptr);
+    int pool_size = handles.size();
+    assert(pool_size == 4);
+    intptr_t handle = 0;
 
     // we can't use "if constexpr" to do a compile-time branch selection as it's C++17 only,
     // so we use custom traits instead
     gesvd<T, real_type> func = gesvd_func<T, real_type>().ptr;
 
     for (int i=0; i<batch_size; i++) {
+        // loop over all handles in the pool
+        int idx = i % pool_size;
+        handle = handles[idx];
         // setting rwork to NULL as we don't need it
         status = func(
             reinterpret_cast<cusolverDnHandle_t>(handle), jobu, jobvt, m, n, A, m,
-            S, U, m, VT, n, Work, buffersize, NULL, devInfo);
+            S, U, m, VT, n, Work+idx*buffersize, buffersize, NULL, devInfo);
         if (status != 0) break;
         A += m * n;
         S += k;
