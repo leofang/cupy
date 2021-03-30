@@ -99,6 +99,10 @@ cdef extern from '../../cupy_backend_runtime.h' nogil:
     int cudaDeviceGetLimit(size_t* value, Limit limit)
     int cudaDeviceSetLimit(Limit limit, size_t value)
 
+    # Kernel attributes
+    int cudaFuncGetAttributes(FuncAttributes* attr, const void* func)
+    int cudaFuncSetAttribute(const void* func, FuncAttribute attr, int value)
+
     # IPC
     int cudaIpcCloseMemHandle(void* devPtr)
     int cudaIpcGetEventHandle(IpcEventHandle* handle, driver.Event event)
@@ -503,6 +507,47 @@ cpdef size_t deviceGetLimit(int limit) except? -1:
 
 cpdef deviceSetLimit(int limit, size_t value):
     status = cudaDeviceSetLimit(<Limit>limit, value)
+    check_status(status)
+
+
+###############################################################################
+# Kernel attributes
+###############################################################################
+
+cpdef dict funcGetAttributes(intptr_t ptr):
+    IF CUDA_VERSION > 0:
+        raise RuntimeError('This Runtime API does not work with CUDA kernels '
+                           'loaded by the Driver API')
+
+    cdef FuncAttributes attrs
+    cdef int status
+    cdef dict attrs_pyc
+
+    with nogil:
+        status = cudaFuncGetAttributes(&attrs, <const void*>ptr)
+    check_status(status)
+
+    attrs_py = {}
+    attrs_py['binaryVersion'] = attrs.binaryVersion
+    attrs_py['cacheModeCA'] = attrs.cacheModeCA
+    attrs_py['constSizeBytes'] = attrs.constSizeBytes
+    attrs_py['localSizeBytes'] = attrs.localSizeBytes
+    attrs_py['maxDynamicSharedSizeBytes'] = attrs.maxDynamicSharedSizeBytes
+    attrs_py['maxThreadsPerBlock'] = attrs.maxThreadsPerBlock
+    attrs_py['numRegs'] = attrs.numRegs
+    attrs_py['preferredShmemCarveout'] = attrs.preferredShmemCarveout
+    attrs_py['ptxVersion'] = attrs.ptxVersion
+    attrs_py['sharedSizeBytes'] = attrs.sharedSizeBytes
+    return attrs_py
+
+cpdef void funcSetAttribute(intptr_t ptr, int attr, int value) except*:
+    IF CUDA_VERSION > 0:
+        raise RuntimeError('This Runtime API does not work with CUDA kernels '
+                           'loaded by the Driver API')
+    cdef int status
+    with nogil:
+        status = cudaFuncSetAttribute(
+            <const void*>ptr, <FuncAttribute>attr, value)
     check_status(status)
 
 

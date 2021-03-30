@@ -92,6 +92,14 @@ typedef hipChannelFormatDesc cudaChannelFormatDesc;
 typedef hipResourceDesc cudaResourceDesc;
 typedef hipTextureDesc cudaTextureDesc;
 
+// Kernel attributes
+typedef hipFuncAttributes cudaFuncAttributes;
+#if HIP_VERSION >= 309
+typedef hipFuncAttribute cudaFuncAttribute;
+#else
+typedef int cudaFuncAttribute;
+#endif
+
 // IPC operations
 typedef hipIpcMemHandle_st cudaIpcMemHandle_t;
 typedef hipIpcEventHandle_st cudaIpcEventHandle_t;

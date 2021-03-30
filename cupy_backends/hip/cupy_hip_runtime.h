@@ -80,6 +80,19 @@ cudaError_t cudaDeviceSetLimit(cudaLimit limit, size_t value) {
     return hipErrorUnknown;
 }
 
+// Kernel attributes
+cudaError_t cudaFuncGetAttributes(cudaFuncAttributes* attr, const void* func) {
+    return hipFuncGetAttributes(attr, func);
+}
+
+cudaError_t cudaFuncSetAttribute(const void* func, cudaFuncAttribute attr, int value) {
+    #if HIP_VERSION >= 309
+    return hipFuncSetAttribute(func, attr, value);
+    #else
+    return hipErrorUnknown;
+    #endif
+}
+
 // IPC operations
 cudaError_t cudaIpcCloseMemHandle(void* devPtr) {
     return hipIpcCloseMemHandle(devPtr);

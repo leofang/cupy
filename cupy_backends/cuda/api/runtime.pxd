@@ -102,6 +102,20 @@ cdef extern from *:
     ctypedef struct cudaUUID 'cudaUUID_t':
         char bytes[16]
 
+    ctypedef int FuncAttribute 'cudaFuncAttribute'
+    ctypedef struct FuncAttributes 'cudaFuncAttributes':
+        int binaryVersion
+        int cacheModeCA
+        size_t constSizeBytes
+        size_t localSizeBytes
+        int maxDynamicSharedSizeBytes
+        int maxThreadsPerBlock
+        int numRegs
+        int preferredShmemCarveout
+        int ptxVersion
+        size_t sharedSizeBytes
+
+
     IF CUDA_VERSION >= 11000:
         # We can't use IF in the middle of structs declaration
         # to add or ignore fields in compile time so we have to
@@ -575,6 +589,10 @@ cpdef enum:
     # cudaTextureReadMode
     cudaReadModeElementType = 0
     cudaReadModeNormalizedFloat = 1
+
+    # cudaFuncAttribute
+    funcAttributeMaxDynamicSharedMemorySize = 8
+    funcAttributePreferredSharedMemoryCarveout = 9
 
 
 # This was a legacy mistake: the prefix "cuda" should have been removed
