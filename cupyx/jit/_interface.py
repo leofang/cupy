@@ -2,6 +2,7 @@ import collections
 
 import numpy
 
+from cupy_backends.cuda.api import driver
 from cupy_backends.cuda.api import runtime
 import cupy
 from cupy._core import core
@@ -62,7 +63,7 @@ class _JitRawKernel:
         if kern is None:
             result = _compile.transpile(
                 self._func,
-                ['extern "C"', '__global__'],
+                ['extern "C"', '__launch_bounds__(256)', '__global__'],
                 self._mode,
                 in_types,
                 _types.Void(),
@@ -71,13 +72,18 @@ class _JitRawKernel:
             # workaround for hipRTC: as of ROCm 4.1.0 hipRTC still does not
             # recognize "-D", so we have to compile using hipcc...
             backend = 'nvcc' if runtime.is_hip else 'nvrtc'
+            print(result.code)
             module = core.compile_with_cache(
                 source=result.code,
                 options=('-DCUPY_JIT_MODE', '--std=c++11'),
                 backend=backend)
             kern = module.get_function(fname)
             self._cache[in_types] = kern
-        kern(grid, block, args, shared_mem, stream, enable_cooperative_groups)
+        attr = driver.CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES
+        print("got it:", driver.funcGetAttribute(attr, kern.ptr))
+        driver.funcSetAttribute(kern.ptr, attr, 256)
+        print("got it:", driver.funcGetAttribute(attr, kern.ptr))
+        #kern(grid, block, args, shared_mem, stream, enable_cooperative_groups)
 
     def __getitem__(self, grid_and_block):
         grid, block = grid_and_block
