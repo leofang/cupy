@@ -8,12 +8,6 @@
 #include "cupy_distributions.cuh"
 
 
-#if defined(_MSC_VER)
-#include <BaseTsd.h>
-typedef SSIZE_T ssize_t;
-#endif
-
-
 struct rk_state {
 
     __device__ virtual uint32_t rk_int() {
@@ -23,6 +17,9 @@ struct rk_state {
         return  0.0;
     }
     __device__ virtual double rk_normal() {
+        return  0.0;
+    }
+    __device__ virtual float rk_normal_float() {
         return  0.0;
     }
 };
@@ -43,13 +40,17 @@ struct curand_pseudo_state: rk_state {
     __device__ virtual double rk_double() {
         // Curand returns (0, 1] while the functions
         // below rely on [0, 1)
-        double r = curand_uniform(_state) - 1e-12;
-        if (r < 0.0) { 
+        double r = curand_uniform(_state);
+        if (r >= 1.0) { 
            r = 0.0;
         }
         return r;
     }
     __device__ virtual double rk_normal() {
+        return curand_normal_double(_state);
+    }
+
+    __device__ virtual float rk_normal_float() {
         return curand_normal(_state);
     }
 };
@@ -100,6 +101,14 @@ void init_curand_generator(int generator, intptr_t state_ptr, uint64_t seed, ssi
 __device__ double rk_standard_exponential(rk_state* state) {
     /* We use -log(1-U) since U is [0, 1) */
     return -log(1.0 - state->rk_double());
+}
+
+__device__ double rk_standard_normal(rk_state* state) {
+    return state->rk_normal();
+}
+
+__device__ float rk_standard_normal_float(rk_state* state) {
+    return state->rk_normal_float();
 }
 
 __device__ double rk_standard_gamma(rk_state* state, double shape) {
@@ -174,6 +183,10 @@ __device__ uint32_t rk_raw(rk_state* state) {
     return state->rk_int();
 }
 
+__device__ double rk_random_uniform(rk_state* state) {
+    return state->rk_double();
+}
+
 __device__ uint32_t rk_interval_32(rk_state* state, uint32_t mx, uint32_t mask) {
     uint32_t sampled = state->rk_int() & mask;
     while(sampled > mx)  {
@@ -199,6 +212,14 @@ struct raw_functor {
     template<typename... Args>
     __device__ uint32_t operator () (Args&&... args) {
         return rk_raw(args...);
+    }
+};
+
+
+struct random_uniform_functor {
+    template<typename... Args>
+    __device__ double operator () (Args&&... args) {
+        return rk_random_uniform(args...);
     }
 };
 
@@ -229,6 +250,20 @@ struct exponential_functor {
     template<typename... Args>
     __device__ double operator () (Args&&... args) {
         return rk_standard_exponential(args...);
+    }
+};
+
+struct standard_normal_functor {
+    template<typename... Args>
+    __device__ double operator () (Args&&... args) {
+        return rk_standard_normal(args...);
+    }
+};
+
+struct standard_normal_float_functor {
+    template<typename... Args>
+    __device__ float operator () (Args&&... args) {
+        return rk_standard_normal_float(args...);
     }
 };
 
@@ -264,6 +299,11 @@ void raw(int generator, intptr_t state, intptr_t out, ssize_t size, intptr_t str
     generator_dispatcher(generator, launcher, state, out, size);
 }
 
+void random_uniform(int generator, intptr_t state, intptr_t out, ssize_t size, intptr_t stream) {
+    kernel_launcher<random_uniform_functor, double> launcher(size, reinterpret_cast<cudaStream_t>(stream));
+    generator_dispatcher(generator, launcher, state, out, size);
+}
+
 //These functions will take the generator_id as a parameter
 void interval_32(int generator, intptr_t state, intptr_t out, ssize_t size, intptr_t stream, int32_t mx, int32_t mask) {
     kernel_launcher<interval_32_functor, int32_t> launcher(size, reinterpret_cast<cudaStream_t>(stream));
@@ -285,3 +325,12 @@ void exponential(int generator, intptr_t state, intptr_t out, ssize_t size, intp
     generator_dispatcher(generator, launcher, state, out, size);
 }
 
+void standard_normal(int generator, intptr_t state, intptr_t out, ssize_t size, intptr_t stream) {
+    kernel_launcher<standard_normal_functor, double> launcher(size, reinterpret_cast<cudaStream_t>(stream));
+    generator_dispatcher(generator, launcher, state, out, size);
+}
+
+void standard_normal_float(int generator, intptr_t state, intptr_t out, ssize_t size, intptr_t stream) {
+    kernel_launcher<standard_normal_float_functor, float> launcher(size, reinterpret_cast<cudaStream_t>(stream));
+    generator_dispatcher(generator, launcher, state, out, size);
+}

@@ -51,16 +51,6 @@ try:
 except ImportError:
     thrust = _UnavailableModule('cupy.cuda.thrust')
 
-try:
-    from cupy.cuda import nccl  # NOQA
-except ImportError:
-    nccl = _UnavailableModule('cupy.cuda.nccl')
-
-try:
-    from cupy_backends.cuda.libs import cutensor
-except ImportError:
-    cutensor = _UnavailableModule('cupy.cuda.cutensor')
-
 
 def __getattr__(key):
     # `*_enabled` flags are kept for backward compatibility.
@@ -73,7 +63,7 @@ This flag always returns True as cuSOLVER is always available in CUDA 8.0 or lat
             ''', DeprecationWarning)  # NOQA
         return True
 
-    for mod in [nvtx, nccl, thrust, cub, cutensor]:
+    for mod in [nvtx, thrust, cub]:
         flag = '{}_enabled'.format(mod.__name__.split('.')[-1])
         if key == flag:
             warnings.warn('''
@@ -111,8 +101,10 @@ from cupy.cuda.function import Module  # NOQA
 from cupy.cuda.memory import alloc  # NOQA
 from cupy.cuda.memory import BaseMemory  # NOQA
 from cupy.cuda.memory import malloc_managed  # NOQA
+from cupy.cuda.memory import malloc_async  # NOQA
 from cupy.cuda.memory import ManagedMemory  # NOQA
 from cupy.cuda.memory import Memory  # NOQA
+from cupy.cuda.memory import MemoryAsync  # NOQA
 from cupy.cuda.memory import MemoryPointer  # NOQA
 from cupy.cuda.memory import MemoryPool  # NOQA
 from cupy.cuda.memory import PythonFunctionAllocator  # NOQA

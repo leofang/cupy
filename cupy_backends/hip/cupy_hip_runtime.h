@@ -124,6 +124,10 @@ cudaError_t cudaMallocArray(cudaArray_t* array, const cudaChannelFormatDesc* des
     return hipMallocArray(array, desc, width, height, flags);
 }
 
+cudaError_t cudaMallocAsync(...) {
+    return hipErrorUnknown;
+}
+
 cudaError_t cudaHostAlloc(void** ptr, size_t size, unsigned int flags) {
     return hipHostMalloc(ptr, size, flags);
 }
@@ -150,6 +154,10 @@ cudaError_t cudaFreeArray(cudaArray_t array) {
 
 cudaError_t cudaFreeHost(void* ptr) {
     return hipHostFree(ptr);
+}
+
+cudaError_t cudaFreeAsync(...) {
+    return hipErrorUnknown;
 }
 
 int cudaMemGetInfo(size_t* free, size_t* total) {
