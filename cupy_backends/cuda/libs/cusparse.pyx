@@ -1539,25 +1539,25 @@ cpdef destroy(intptr_t handle):
     check_status(status)
 
 
-cpdef destroyMatDescr(size_t descr):
+cpdef destroyMatDescr(intptr_t descr):
     status = cusparseDestroyMatDescr(<MatDescr>descr)
     check_status(status)
 
 
-cpdef setMatIndexBase(size_t descr, base):
+cpdef setMatIndexBase(intptr_t descr, base):
     status = cusparseSetMatIndexBase(<MatDescr>descr, base)
     check_status(status)
 
 
-cpdef setMatType(size_t descr, typ):
+cpdef setMatType(intptr_t descr, typ):
     status = cusparseSetMatType(<MatDescr>descr, typ)
     check_status(status)
 
-cpdef setMatFillMode(size_t descrA, int fillMode):
+cpdef setMatFillMode(intptr_t descrA, int fillMode):
     status = cusparseSetMatFillMode(<MatDescr>descrA, <FillMode>fillMode)
     check_status(status)
 
-cpdef setMatDiagType(size_t descrA, int diagType):
+cpdef setMatDiagType(intptr_t descrA, int diagType):
     status = cusparseSetMatDiagType(<MatDescr>descrA, <DiagType>diagType)
     check_status(status)
 
@@ -1625,8 +1625,8 @@ cpdef zgthr(intptr_t handle, int nnz, size_t y, size_t xVal, size_t xInd,
 
 cpdef scsrmv(
         intptr_t handle, int transA, int m, int n, int nnz,
-        size_t alpha, size_t descrA, size_t csrSortedValA,
-        size_t csrSortedRowPtrA, size_t csrSortedColIndA,
+        size_t alpha, intptr_t descrA, intptr_t csrSortedValA,
+        intptr_t csrSortedRowPtrA, intptr_t csrSortedColIndA,
         size_t x, size_t beta, size_t y):
     _setStream(handle)
     status = cusparseScsrmv(
