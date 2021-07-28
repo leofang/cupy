@@ -2577,13 +2577,20 @@ cpdef ndarray _convert_object_with_cuda_array_interface(a):
         dev_id = device.get_device_id()
     mem = memory_module.UnownedMemory(ptr, nbytes, a, dev_id)
     memptr = memory.MemoryPointer(mem, 0)
-    # the v3 protocol requires an immediate synchronization, unless
+    # the v3 protocol requires to establish a proper stream order, unless
     # 1. the stream is not set (ex: from v0 ~ v2) or is None
-    # 2. users explicitly overwrite this requirement
+    # 2. users explicitly overwrite this requirement (ex: managing it manually)
     stream_ptr = desc.get('stream')
     if stream_ptr is not None:
         if _util.CUDA_ARRAY_INTERFACE_SYNC:
-            runtime.streamSynchronize(stream_ptr)
+            curr_stream = stream_module.get_current_stream()
+            curr_stream_ptr = curr_stream.ptr
+            if curr_stream_ptr == 0:
+                curr_stream_ptr = _stream_module.get_default_stream_ptr()
+            if stream_ptr >= 0 and stream_ptr != curr_stream_ptr:
+                next_stream = stream_mod.ExternalStream(stream_ptr)
+                event = curr_stream.record()
+                next_stream.wait_event(event)
     return ndarray(shape, dtype, memptr, strides)
 
 
