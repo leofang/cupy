@@ -17,6 +17,12 @@ try:
 except ImportError:
     cutensor = None
 
+try:
+    from cuquantum import cutensornet
+    cutn_handle_cache = {}
+except ImportError:
+    cutensornet = None
+
 
 options = {
     'sum_ellipsis': False,
@@ -272,8 +278,10 @@ def _iter_path_pairs(path):
         if len(indices) >= 2:
             indices = sorted(indices, reverse=True)
             yield indices[0], indices[1]
+            remaining = len(indices)-2
             for idx in indices[2:]:
-                yield -1, idx
+                yield remaining, idx
+                remaining -= 1
 
 
 def _flatten_transpose(a, axeses):
@@ -443,8 +451,23 @@ def _tuple_sorted_by_0(zs):
     return tuple(i for _, i in sorted(zs))
 
 
+def _can_use_cutensornet(result_dtype):
+    if cutensornet is None:
+        return False
+
+    if cupy.cuda.runtime.is_hip:
+        return False
+
+    result_dtype = cupy.dtype(result_dtype)
+    if result_dtype not in (
+            cupy.float32, cupy.float64, cupy.complex64, cupy.complex128):
+        return False
+
+    return True
+
+
 def einsum(*operands, **kwargs):
-    """einsum(subscripts, *operands, dtype=False)
+    """einsum(subscripts, *operands, dtype=None, optimize=False)
 
     Evaluates the Einstein summation convention on the operands.
     Using the Einstein summation convention, many common multi-dimensional
@@ -452,13 +475,16 @@ def einsum(*operands, **kwargs):
     provides a way to compute such summations.
 
     .. note::
-       Memory contiguity of calculation result is not always compatible with
+
+       - Memory contiguity of calculation result is not always compatible with
        `numpy.einsum`.
-       ``out``, ``order``, and ``casting`` options are not supported.
+       - ``out``, ``order``, and ``casting`` options are not supported.
 
     Args:
         subscripts (str): Specifies the subscripts for summation.
         operands (sequence of arrays): These are the arrays for the operation.
+        dtype:
+        optimize:
 
     Returns:
         cupy.ndarray:
@@ -609,12 +635,15 @@ def einsum(*operands, **kwargs):
             for a in operands
         ]
 
-    # no more casts
+    # no more casts or mutation of input_subscripts/operands
 
     optimize_algorithms = {
         'greedy': _greedy_path,
         'optimal': _optimal_path,
+        'cutensornet': cutensornet,  # could be None
     }
+    memory_limit = 2 ** 31  # TODO(kataoka): fix?
+    pairwise_contraction = True
     if optimize is False:
         path = [tuple(range(len(operands)))]
     elif len(optimize) and (optimize[0] == 'einsum_path'):
@@ -626,17 +655,52 @@ def einsum(*operands, **kwargs):
                 memory_limit = int(optimize[1])
             else:
                 algo = optimize_algorithms[optimize]
-                memory_limit = 2 ** 31  # TODO(kataoka): fix?
         except (TypeError, KeyError):  # unhashable type or not found
             raise TypeError('Did not understand the path (optimize): %s'
                             % str(optimize))
-        input_sets = [set(sub) for sub in input_subscripts]
-        output_set = set(output_subscript)
-        path = algo(input_sets, output_set, dimension_dict, memory_limit)
-        if any(len(indices) > 2 for indices in path):
-            warnings.warn(
-                'memory efficient einsum is not supported yet',
-                _util.PerformanceWarning)
+        if algo is not cutensornet:
+            input_sets = [set(sub) for sub in input_subscripts]
+            output_set = set(output_subscript)
+            path = algo(input_sets, output_set, dimension_dict, memory_limit)
+        else:
+            if not _can_use_cutensornet(result_dtype):
+                raise ValueError("either cuQuantum Python is not installed, "
+                                 "or the input combination is not supported "
+                                 "by the cuTensorNet backend")
+            # get the library handle
+            # and call with the interleaved format + basic options
+            device = cupy.cuda.runtime.getDevice()
+            handle = cutn_handle_cache.get(
+                device, cutensornet.create())
+            cutn_options = {'device_id': device, 'handle': handle,
+                            'memory_limit': memory_limit}
+            path, _ = cutensornet.contract_path(
+                *([i for pair in zip(operands, input_subscripts) for i in pair]
+                  + [output_subscript]),
+                options=cutn_options)
+            optimize = cutensornet  # for reusing the local variables later
+    if any(len(indices) > 2 for indices in path):
+        warnings.warn(
+            'memory efficient einsum is not supported yet',
+            _util.PerformanceWarning)
+        pairwise_contraction = False
+
+    # TODO(leofang): use accelerator here?
+    if _can_use_cutensornet(result_dtype):
+        # a user could use other optimization method and just use cutn
+        # to execute the contraction
+        if optimize != 'cutensornet':
+            device = cupy.cuda.runtime.getDevice()
+            handle = cutn_handle_cache.get(
+                device, cutensornet.create())
+            cutn_options = {'device_id': device, 'handle': handle,
+                            'memory_limit': memory_limit}
+        if not pairwise_contraction:
+            path = [pair for pair in _iter_path_pairs(path)]
+        return cutensornet.contract(
+            *([i for pair in zip(operands, input_subscripts) for i in pair]
+              + [output_subscript]),
+            options=cutn_options, optimize={'path': path})
 
     for idx0, idx1 in _iter_path_pairs(path):
         # "reduced" binary einsum
