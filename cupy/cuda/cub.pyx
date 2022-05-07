@@ -59,7 +59,7 @@ cdef extern from 'cupy_cub.h' nogil:
     void cub_device_histogram_range(void*, size_t&, void*, void*, int, void*,
                                     size_t, Stream_t, int)
     void cub_device_segmented_sort(void*, size_t&, void*, void*, int, int,
-                                   void*, Stream_t, int)
+                                   void*, int, Stream_t, int)
     size_t cub_device_reduce_get_workspace_size(void*, void*, int, Stream_t,
                                                 int, int)
     size_t cub_device_segmented_reduce_get_workspace_size(
@@ -71,7 +71,7 @@ cdef extern from 'cupy_cub.h' nogil:
     size_t cub_device_histogram_range_get_workspace_size(
         void*, void*, int, void*, size_t, Stream_t, int)
     size_t cub_device_segmented_sort_get_workspace_size(
-        void*, void*, int, int, void*, Stream_t, int)
+        void*, void*, int, int, void*, int, Stream_t, int)
 
     # Build-time version
     int CUPY_CUB_VERSION_CODE
@@ -543,7 +543,7 @@ cpdef cub_scan(ndarray arr, op):
     return None
 
 
-def device_segmented_sort(ndarray x, ndarray offset):
+def device_segmented_sort(ndarray x, ndarray offset, bint ascending=True):
     cdef ndarray y
     cdef memory.MemoryPointer ws
     cdef void* x_ptr
@@ -566,11 +566,12 @@ def device_segmented_sort(ndarray x, ndarray offset):
 
     # get workspace size and then fire up
     ws_size = cub_device_segmented_sort_get_workspace_size(
-        x_ptr, y_ptr, n_items, n_segments, offset_start_ptr, s, dtype_id)
+        x_ptr, y_ptr, n_items, n_segments, offset_start_ptr,
+        <int>ascending, s, dtype_id)
     ws = memory.alloc(ws_size)
     ws_ptr = <void*>ws.ptr
     with nogil:
         cub_device_segmented_sort(
             ws_ptr, ws_size, x_ptr, y_ptr, n_items, n_segments,
-            offset_start_ptr, s, dtype_id)
+            offset_start_ptr, <int>ascending, s, dtype_id)
     return y
