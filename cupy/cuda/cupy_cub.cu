@@ -743,6 +743,51 @@ struct _cub_segmented_sort {
     }
 };
 
+template <typename KeyT>
+struct _cub_segmented_sort_pairs {
+
+    template <typename ValueT>
+    void operator()(void*& workspace, size_t& workspace_size, void*& keys, void*& values,
+        void*& keys_out, void*& values_out, int& n_items, int& n_segments, void*& offset,
+        int& ascending, cudaStream_t& s) const
+    {
+        #if !defined(CUPY_USE_HIP) && __CUDACC_VER_MAJOR__ >= 11
+        DoubleBuffer<KeyT> d_keys(static_cast<KeyT*>(keys), static_cast<KeyT*>(keys_out));
+        DoubleBuffer<ValueT> d_values(static_cast<ValueT*>(values), static_cast<ValueT*>(values_out));
+        if (ascending) {
+            DeviceSegmentedRadixSort::SortPairs(workspace, workspace_size, d_keys, d_values, n_items, n_segments,
+                                               static_cast<int*>(offset), static_cast<int*>(offset)+1,
+                                               0, sizeof(KeyT)*8, // default values, don't mean to touch
+                                               s);
+        } else {
+            DeviceSegmentedRadixSort::SortPairsDescending(workspace, workspace_size, d_keys, d_values, n_items, n_segments,
+                                                         static_cast<int*>(offset), static_cast<int*>(offset)+1,
+                                                         0, sizeof(KeyT)*8, // default values, don't mean to touch
+                                                         s);
+        }
+        #endif
+    }
+
+};
+
+struct _cub_segmented_sort_pairs_dispatcher {
+
+    template <typename KeyT>
+    void operator()(void* workspace, size_t& workspace_size, void* keys,
+        void* values, void* keys_out, void* values_out, int n_items, int n_segments, void* offset,
+        int ascending, cudaStream_t s, int values_dtype_id) const
+    {
+        #if !defined(CUPY_USE_HIP) && __CUDACC_VER_MAJOR__ >= 11
+        return dtype_dispatcher(values_dtype_id, _cub_segmented_sort_pairs<KeyT>(),
+                                workspace, workspace_size,
+                                keys, values, keys_out, values_out,
+                                n_items, n_segments, offset,
+                                ascending, s);
+        #endif
+    }
+
+};
+
 //
 // APIs exposed to CuPy
 //
@@ -903,23 +948,57 @@ size_t cub_device_histogram_range_get_workspace_size(void* x, void* y, int n_bin
 /* -------- device segmented sort -------- */
 
 void cub_device_segmented_sort(
-    void* workspace, size_t& workspace_size, void* x, void* y,
-    int n_items, int n_segments, void* offset, int ascending,
-    cudaStream_t stream, int dtype_id)
+    void* workspace, size_t& workspace_size,
+    void* keys, void* keys_out,
+    int n_items, int n_segments, void* offset,
+    int ascending, cudaStream_t stream, int dtype_id)
 {
     #if !defined(CUPY_USE_HIP) && __CUDACC_VER_MAJOR__ >= 11
     return dtype_dispatcher(dtype_id, _cub_segmented_sort(),
-                            workspace, workspace_size, x, y, n_items, n_segments,
-                            offset, ascending, stream);
+                            workspace, workspace_size,
+                            keys, keys_out,
+                            n_items, n_segments, offset,
+                            ascending, stream);
     #endif
 }
 
 size_t cub_device_segmented_sort_get_workspace_size(
-    void* x, void* y, int n_items, int n_segments, void* offset, int ascending,
-    cudaStream_t stream, int dtype_id)
+    void* keys, void* keys_out,
+    int n_items, int n_segments, void* offset,
+    int ascending, cudaStream_t stream, int dtype_id)
 {
     size_t workspace_size = 0;
-    cub_device_segmented_sort(NULL, workspace_size, x, y, n_items, n_segments,
-                              offset, ascending, stream, dtype_id);
+    cub_device_segmented_sort(NULL, workspace_size,
+                              keys, keys_out,
+                              n_items, n_segments, offset,
+                              ascending, stream, dtype_id);
+    return workspace_size;
+}
+
+void cub_device_segmented_sort(
+    void* workspace, size_t& workspace_size,
+    void* keys, void* keys_out, void* values, void* values_out,
+    int n_items, int n_segments, void* offset,
+    int ascending, cudaStream_t stream, int keys_dtype_id, int values_dtype_id)
+{
+    #if !defined(CUPY_USE_HIP) && __CUDACC_VER_MAJOR__ >= 11
+    return dtype_dispatcher(keys_dtype_id, _cub_segmented_sort_pairs_dispatcher(),
+                            workspace, workspace_size,
+                            keys, keys_out, values, values_out,
+                            n_items, n_segments, offset,
+                            ascending, stream, values_dtype_id);
+    #endif
+}
+
+size_t cub_device_segmented_sort_get_workspace_size(
+    void* keys, void* keys_out, void* values, void* values_out,
+    int n_items, int n_segments, void* offset,
+    int ascending, cudaStream_t stream, int keys_dtype_id, int values_dtype_id)
+{
+    size_t workspace_size = 0;
+    cub_device_segmented_sort(NULL, workspace_size,
+                              keys, keys_out, values, values_out,
+                              n_items, n_segments, offset,
+                              ascending, stream, keys_dtype_id, values_dtype_id);
     return workspace_size;
 }

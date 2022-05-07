@@ -60,6 +60,9 @@ cdef extern from 'cupy_cub.h' nogil:
                                     size_t, Stream_t, int)
     void cub_device_segmented_sort(void*, size_t&, void*, void*, int, int,
                                    void*, int, Stream_t, int)
+    void cub_device_segmented_sort(void*, size_t&, void*, void*, void*, void*,
+                                   int, int, void*,
+                                   int, Stream_t, int, int)
     size_t cub_device_reduce_get_workspace_size(void*, void*, int, Stream_t,
                                                 int, int)
     size_t cub_device_segmented_reduce_get_workspace_size(
@@ -72,6 +75,10 @@ cdef extern from 'cupy_cub.h' nogil:
         void*, void*, int, void*, size_t, Stream_t, int)
     size_t cub_device_segmented_sort_get_workspace_size(
         void*, void*, int, int, void*, int, Stream_t, int)
+    size_t cub_device_segmented_sort_get_workspace_size(
+        void*, void*, void*, void*,
+        int, int, void*,
+        int, Stream_t, int, int)
 
     # Build-time version
     int CUPY_CUB_VERSION_CODE
@@ -543,35 +550,73 @@ cpdef cub_scan(ndarray arr, op):
     return None
 
 
-def device_segmented_sort(ndarray x, ndarray offset, bint ascending=True):
-    cdef ndarray y
+def device_segmented_sort(
+        ndarray keys, ndarray offset,
+        ndarray values=None, bint ascending=True):
+    cdef ndarray keys_out, values_out
     cdef memory.MemoryPointer ws
-    cdef void* x_ptr
-    cdef void* y_ptr
+    cdef void* keys_ptr
+    cdef void* values_ptr
+    cdef void* keys_out_ptr
+    cdef void* values_out_ptr
     cdef void* ws_ptr
-    cdef void* offset_start_ptr
-    cdef int dtype_id, n_segments, n_items
+    cdef void* offset_ptr
+    cdef int n_segments, n_items
+    cdef int keys_dtype_id, values_dtype_id
     cdef size_t ws_size
     cdef Stream_t s
+    cdef bint sort_pairs
 
     # prepare input
-    x_ptr = <void*>x.data.ptr
-    y = cupy.empty_like(x, dtype=x.dtype)
-    y_ptr = <void*>y.data.ptr
+    keys = _internal_ascontiguousarray(keys)
+    keys_ptr = <void*>keys.data.ptr
+    keys_out = cupy.empty_like(keys, dtype=keys.dtype)
+    keys_out_ptr = <void*>keys_out.data.ptr
+    if values is not None:
+        values = _internal_ascontiguousarray(values)
+        values_ptr = <void*>values.data.ptr
+        values_out = cupy.empty_like(values, dtype=values.dtype)
+        values_out_ptr = <void*>values_out.data.ptr
+        sort_pairs = True
+        assert keys.size == values.size
+    else:
+        sort_pairs = False
     n_segments = offset.size-1
-    n_items = x.size
-    offset_start_ptr = <void*>offset.data.ptr
+    n_items = keys.size
+    offset_ptr = <void*>offset.data.ptr
     s = <Stream_t>stream.get_current_stream_ptr()
-    dtype_id = common._get_dtype_id(x.dtype)
+    keys_dtype_id = common._get_dtype_id(keys.dtype)
+    values_dtype_id = common._get_dtype_id(values.dtype)
 
     # get workspace size and then fire up
-    ws_size = cub_device_segmented_sort_get_workspace_size(
-        x_ptr, y_ptr, n_items, n_segments, offset_start_ptr,
-        <int>ascending, s, dtype_id)
+    if sort_pairs:
+        ws_size = cub_device_segmented_sort_get_workspace_size(
+            keys_ptr, values_ptr, keys_out_ptr, values_out_ptr,
+            n_items, n_segments, offset_ptr,
+            <int>ascending, s, keys_dtype_id, values_dtype_id)
+    else:
+        ws_size = cub_device_segmented_sort_get_workspace_size(
+            keys_ptr, keys_out_ptr,
+            n_items, n_segments, offset_ptr,
+            <int>ascending, s, keys_dtype_id)
     ws = memory.alloc(ws_size)
     ws_ptr = <void*>ws.ptr
+
     with nogil:
-        cub_device_segmented_sort(
-            ws_ptr, ws_size, x_ptr, y_ptr, n_items, n_segments,
-            offset_start_ptr, <int>ascending, s, dtype_id)
-    return y
+        if sort_pairs:
+            cub_device_segmented_sort(
+                ws_ptr, ws_size,
+                keys_ptr, values_ptr, keys_out_ptr, values_out_ptr,
+                n_items, n_segments, offset_ptr,
+                <int>ascending, s, keys_dtype_id, values_dtype_id)
+        else:
+            cub_device_segmented_sort(
+                ws_ptr, ws_size,
+                keys_ptr, keys_out_ptr,
+                n_items, n_segments, offset_ptr,
+                <int>ascending, s, keys_dtype_id)
+
+    if sort_pairs:
+        return keys_out, values_out
+    else:
+        return keys_out
