@@ -4,6 +4,7 @@
 #ifndef CUPY_USE_HIP
 #include <cub/device/device_reduce.cuh>
 #include <cub/device/device_segmented_reduce.cuh>
+#include <cub/device/device_segmented_radix_sort.cuh>
 #include <cub/device/device_spmv.cuh>
 #include <cub/device/device_scan.cuh>
 #include <cub/device/device_histogram.cuh>
@@ -715,6 +716,21 @@ struct _cub_histogram_range {
     }
 };
 
+//
+// **** CUB segmented sort ****
+//
+struct _cub_segmented_sort {
+    template <typename T>
+    void operator()(void* workspace, size_t& workspace_size, void* input, void* output,
+        int n_items, int n_segments, void* offset, cudaStream_t s) const
+    {
+        DoubleBuffer<T> d_keys(static_cast<T*>(input), static_cast<T*>(output));
+        DeviceSegmentedRadixSort::SortKeys(workspace, workspace_size, d_keys, n_items, n_segments,
+                                           static_cast<int*>(offset), static_cast<int*>(offset)+1,
+                                           0, sizeof(T)*8, // default values, don't mean to touch
+                                           s);
+    }
+};
 
 //
 // APIs exposed to CuPy
@@ -870,5 +886,26 @@ size_t cub_device_histogram_range_get_workspace_size(void* x, void* y, int n_bin
     size_t workspace_size = 0;
     cub_device_histogram_range(NULL, workspace_size, x, y, n_bins, bins, n_samples,
                                stream, dtype_id);
+    return workspace_size;
+}
+
+/* -------- device segmented sort -------- */
+
+void cub_device_segmented_sort(
+    void* workspace, size_t& workspace_size, void* x, void* y,
+    int n_items, int n_segments, void* offset, cudaStream_t stream, int dtype_id)
+{
+    return dtype_dispatcher(dtype_id, _cub_segmented_sort(),
+                            workspace, workspace_size, x, y, n_items, n_segments,
+                            offset, stream);
+}
+
+size_t cub_device_segmented_sort_get_workspace_size(
+    void* x, void* y, int n_items, int n_segments, void* offset,
+    cudaStream_t stream, int dtype_id)
+{
+    size_t workspace_size = 0;
+    cub_device_segmented_sort(NULL, workspace_size, x, y, n_items, n_segments,
+                              offset, stream, dtype_id);
     return workspace_size;
 }

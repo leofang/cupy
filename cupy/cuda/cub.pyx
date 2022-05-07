@@ -58,6 +58,8 @@ cdef extern from 'cupy_cub.h' nogil:
     void cub_device_scan(void*, size_t&, void*, void*, int, Stream_t, int, int)
     void cub_device_histogram_range(void*, size_t&, void*, void*, int, void*,
                                     size_t, Stream_t, int)
+    void cub_device_segmented_sort(void*, size_t&, void*, void*, int, int,
+                                   void*, Stream_t, int)
     size_t cub_device_reduce_get_workspace_size(void*, void*, int, Stream_t,
                                                 int, int)
     size_t cub_device_segmented_reduce_get_workspace_size(
@@ -68,6 +70,8 @@ cdef extern from 'cupy_cub.h' nogil:
         void*, void*, int, Stream_t, int, int)
     size_t cub_device_histogram_range_get_workspace_size(
         void*, void*, int, void*, size_t, Stream_t, int)
+    size_t cub_device_segmented_sort_get_workspace_size(
+        void*, void*, int, int, void*, Stream_t, int)
 
     # Build-time version
     int CUPY_CUB_VERSION_CODE
@@ -537,3 +541,36 @@ cpdef cub_scan(ndarray arr, op):
         return device_scan(arr, op)
 
     return None
+
+
+def device_segmented_sort(ndarray x, ndarray offset):
+    cdef ndarray y
+    cdef memory.MemoryPointer ws
+    cdef void* x_ptr
+    cdef void* y_ptr
+    cdef void* ws_ptr
+    cdef void* offset_start_ptr
+    cdef int dtype_id, n_segments, n_items
+    cdef size_t ws_size
+    cdef Stream_t s
+
+    # prepare input
+    x_ptr = <void*>x.data.ptr
+    y = cupy.empty_like(x, dtype=x.dtype)
+    y_ptr = <void*>y.data.ptr
+    n_segments = offset.size-1
+    n_items = x.size
+    offset_start_ptr = <void*>offset.data.ptr
+    s = <Stream_t>stream.get_current_stream_ptr()
+    dtype_id = common._get_dtype_id(x.dtype)
+
+    # get workspace size and then fire up
+    ws_size = cub_device_segmented_sort_get_workspace_size(
+        x_ptr, y_ptr, n_items, n_segments, offset_start_ptr, s, dtype_id)
+    ws = memory.alloc(ws_size)
+    ws_ptr = <void*>ws.ptr
+    with nogil:
+        cub_device_segmented_sort(
+            ws_ptr, ws_size, x_ptr, y_ptr, n_items, n_segments,
+            offset_start_ptr, s, dtype_id)
+    return y
