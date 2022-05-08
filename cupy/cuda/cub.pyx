@@ -58,9 +58,12 @@ cdef extern from 'cupy_cub.h' nogil:
     void cub_device_scan(void*, size_t&, void*, void*, int, Stream_t, int, int)
     void cub_device_histogram_range(void*, size_t&, void*, void*, int, void*,
                                     size_t, Stream_t, int)
-    void cub_device_segmented_sort(void*, size_t&, void*, void*, int, int,
-                                   void*, int, Stream_t, int)
-    void cub_device_segmented_sort(void*, size_t&, void*, void*, void*, void*,
+    void cub_device_segmented_sort(void*, size_t&,
+                                   void*, void*,
+                                   int, int, void*,
+                                   int, Stream_t, int)
+    void cub_device_segmented_sort(void*, size_t&,
+                                   void*, void*, void*, void*,
                                    int, int, void*,
                                    int, Stream_t, int, int)
     size_t cub_device_reduce_get_workspace_size(void*, void*, int, Stream_t,
@@ -74,7 +77,9 @@ cdef extern from 'cupy_cub.h' nogil:
     size_t cub_device_histogram_range_get_workspace_size(
         void*, void*, int, void*, size_t, Stream_t, int)
     size_t cub_device_segmented_sort_get_workspace_size(
-        void*, void*, int, int, void*, int, Stream_t, int)
+        void*, void*,
+        int, int, void*,
+        int, Stream_t, int)
     size_t cub_device_segmented_sort_get_workspace_size(
         void*, void*, void*, void*,
         int, int, void*,
@@ -570,13 +575,13 @@ def device_segmented_sort(
     # prepare input
     keys = _internal_ascontiguousarray(keys)
     keys_ptr = <void*>keys.data.ptr
-    keys_out = cupy.empty_like(keys, dtype=keys.dtype)
+    keys_out = ndarray(keys.shape, dtype=keys.dtype)
     keys_out_ptr = <void*>keys_out.data.ptr
     keys_dtype_id = common._get_dtype_id(keys.dtype)
     if values is not None:
         values = _internal_ascontiguousarray(values)
         values_ptr = <void*>values.data.ptr
-        values_out = cupy.empty_like(values, dtype=values.dtype)
+        values_out = ndarray(values.shape, dtype=values.dtype)
         values_out_ptr = <void*>values_out.data.ptr
         sort_pairs = True
         values_dtype_id = common._get_dtype_id(values.dtype)
@@ -591,7 +596,7 @@ def device_segmented_sort(
     # get workspace size and then fire up
     if sort_pairs:
         ws_size = cub_device_segmented_sort_get_workspace_size(
-            keys_ptr, values_ptr, keys_out_ptr, values_out_ptr,
+            keys_ptr, keys_out_ptr, values_ptr, values_out_ptr,
             n_items, n_segments, offset_ptr,
             <int>ascending, s, keys_dtype_id, values_dtype_id)
     else:
@@ -606,7 +611,7 @@ def device_segmented_sort(
         if sort_pairs:
             cub_device_segmented_sort(
                 ws_ptr, ws_size,
-                keys_ptr, values_ptr, keys_out_ptr, values_out_ptr,
+                keys_ptr, keys_out_ptr, values_ptr, values_out_ptr,
                 n_items, n_segments, offset_ptr,
                 <int>ascending, s, keys_dtype_id, values_dtype_id)
         else:

@@ -747,23 +747,24 @@ template <typename KeyT>
 struct _cub_segmented_sort_pairs {
 
     template <typename ValueT>
-    void operator()(void*& workspace, size_t& workspace_size, void*& keys, void*& values,
-        void*& keys_out, void*& values_out, int& n_items, int& n_segments, void*& offset,
-        int& ascending, cudaStream_t& s) const
+    void operator()(void* workspace, size_t& workspace_size,
+                    void* keys, void* keys_out, void* values, void* values_out,
+                    int n_items, int n_segments, void* offset,
+                    int ascending, cudaStream_t s) const
     {
         #if !defined(CUPY_USE_HIP) && __CUDACC_VER_MAJOR__ >= 11
         DoubleBuffer<KeyT> d_keys(static_cast<KeyT*>(keys), static_cast<KeyT*>(keys_out));
         DoubleBuffer<ValueT> d_values(static_cast<ValueT*>(values), static_cast<ValueT*>(values_out));
         if (ascending) {
             DeviceSegmentedRadixSort::SortPairs(workspace, workspace_size, d_keys, d_values, n_items, n_segments,
-                                               static_cast<int*>(offset), static_cast<int*>(offset)+1,
-                                               0, sizeof(KeyT)*8, // default values, don't mean to touch
-                                               s);
+                                                static_cast<int*>(offset), static_cast<int*>(offset)+1,
+                                                0, sizeof(KeyT)*8, // default values, don't mean to touch
+                                                s);
         } else {
             DeviceSegmentedRadixSort::SortPairsDescending(workspace, workspace_size, d_keys, d_values, n_items, n_segments,
-                                                         static_cast<int*>(offset), static_cast<int*>(offset)+1,
-                                                         0, sizeof(KeyT)*8, // default values, don't mean to touch
-                                                         s);
+                                                          static_cast<int*>(offset), static_cast<int*>(offset)+1,
+                                                          0, sizeof(KeyT)*8, // default values, don't mean to touch
+                                                          s);
         }
         #endif
     }
@@ -773,14 +774,15 @@ struct _cub_segmented_sort_pairs {
 struct _cub_segmented_sort_pairs_dispatcher {
 
     template <typename KeyT>
-    void operator()(void* workspace, size_t& workspace_size, void* keys,
-        void* values, void* keys_out, void* values_out, int n_items, int n_segments, void* offset,
-        int ascending, cudaStream_t s, int values_dtype_id) const
+    void operator()(void* workspace, size_t& workspace_size,
+                    void* keys, void* keys_out, void* values, void* values_out,
+                    int n_items, int n_segments, void* offset,
+                    int ascending, cudaStream_t s, int values_dtype_id) const
     {
         #if !defined(CUPY_USE_HIP) && __CUDACC_VER_MAJOR__ >= 11
         return dtype_dispatcher(values_dtype_id, _cub_segmented_sort_pairs<KeyT>(),
                                 workspace, workspace_size,
-                                keys, values, keys_out, values_out,
+                                keys, keys_out, values, values_out,
                                 n_items, n_segments, offset,
                                 ascending, s);
         #endif
