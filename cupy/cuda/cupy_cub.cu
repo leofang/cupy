@@ -723,18 +723,24 @@ struct _cub_histogram_range {
 //
 struct _cub_segmented_sort {
     template <typename T>
-    void operator()(void* workspace, size_t& workspace_size, void* input, void* output,
-        int n_items, int n_segments, void* offset, int ascending, cudaStream_t s) const
+    void operator()(void* workspace, size_t& workspace_size,
+                    const void* input, void* output,
+                    int n_items, int n_segments, void* offset,
+                    int ascending, cudaStream_t s) const
     {
+        // we can't use the DoubleBuffer version because it'd destroy the inputs
         #if !defined(CUPY_USE_HIP) && __CUDACC_VER_MAJOR__ >= 11
-        DoubleBuffer<T> d_keys(static_cast<T*>(input), static_cast<T*>(output));
         if (ascending) {
-            DeviceSegmentedRadixSort::SortKeys(workspace, workspace_size, d_keys, n_items, n_segments,
+            DeviceSegmentedRadixSort::SortKeys(workspace, workspace_size,
+                                               static_cast<const T*>(input), static_cast<T*>(output),
+                                               n_items, n_segments,
                                                static_cast<int*>(offset), static_cast<int*>(offset)+1,
                                                0, sizeof(T)*8, // default values, don't mean to touch
                                                s);
         } else {
-            DeviceSegmentedRadixSort::SortKeysDescending(workspace, workspace_size, d_keys, n_items, n_segments,
+            DeviceSegmentedRadixSort::SortKeysDescending(workspace, workspace_size,
+                                                         static_cast<const T*>(input), static_cast<T*>(output),
+                                                         n_items, n_segments,
                                                          static_cast<int*>(offset), static_cast<int*>(offset)+1,
                                                          0, sizeof(T)*8, // default values, don't mean to touch
                                                          s);
@@ -743,25 +749,32 @@ struct _cub_segmented_sort {
     }
 };
 
+// we are doing a two-level dispatching here (keys and values can have different
+// types), so it's a bit ugly...
 template <typename KeyT>
 struct _cub_segmented_sort_pairs {
 
     template <typename ValueT>
     void operator()(void* workspace, size_t& workspace_size,
-                    void* keys, void* keys_out, void* values, void* values_out,
+                    const void* keys, void* keys_out, const void* values, void* values_out,
                     int n_items, int n_segments, void* offset,
                     int ascending, cudaStream_t s) const
     {
+        // we can't use the DoubleBuffer version because it'd destroy the inputs
         #if !defined(CUPY_USE_HIP) && __CUDACC_VER_MAJOR__ >= 11
-        DoubleBuffer<KeyT> d_keys(static_cast<KeyT*>(keys), static_cast<KeyT*>(keys_out));
-        DoubleBuffer<ValueT> d_values(static_cast<ValueT*>(values), static_cast<ValueT*>(values_out));
         if (ascending) {
-            DeviceSegmentedRadixSort::SortPairs(workspace, workspace_size, d_keys, d_values, n_items, n_segments,
+            DeviceSegmentedRadixSort::SortPairs(workspace, workspace_size,
+                                                static_cast<const KeyT*>(keys), static_cast<KeyT*>(keys_out),
+                                                static_cast<const ValueT*>(values), static_cast<ValueT*>(values_out),
+                                                n_items, n_segments,
                                                 static_cast<int*>(offset), static_cast<int*>(offset)+1,
                                                 0, sizeof(KeyT)*8, // default values, don't mean to touch
                                                 s);
         } else {
-            DeviceSegmentedRadixSort::SortPairsDescending(workspace, workspace_size, d_keys, d_values, n_items, n_segments,
+            DeviceSegmentedRadixSort::SortPairsDescending(workspace, workspace_size,
+                                                          static_cast<const KeyT*>(keys), static_cast<KeyT*>(keys_out),
+                                                          static_cast<const ValueT*>(values), static_cast<ValueT*>(values_out),
+                                                          n_items, n_segments,
                                                           static_cast<int*>(offset), static_cast<int*>(offset)+1,
                                                           0, sizeof(KeyT)*8, // default values, don't mean to touch
                                                           s);
