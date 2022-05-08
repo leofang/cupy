@@ -572,12 +572,14 @@ def device_segmented_sort(
     keys_ptr = <void*>keys.data.ptr
     keys_out = cupy.empty_like(keys, dtype=keys.dtype)
     keys_out_ptr = <void*>keys_out.data.ptr
+    keys_dtype_id = common._get_dtype_id(keys.dtype)
     if values is not None:
         values = _internal_ascontiguousarray(values)
         values_ptr = <void*>values.data.ptr
         values_out = cupy.empty_like(values, dtype=values.dtype)
         values_out_ptr = <void*>values_out.data.ptr
         sort_pairs = True
+        values_dtype_id = common._get_dtype_id(values.dtype)
         assert keys.size == values.size
     else:
         sort_pairs = False
@@ -585,8 +587,6 @@ def device_segmented_sort(
     n_items = keys.size
     offset_ptr = <void*>offset.data.ptr
     s = <Stream_t>stream.get_current_stream_ptr()
-    keys_dtype_id = common._get_dtype_id(keys.dtype)
-    values_dtype_id = common._get_dtype_id(values.dtype)
 
     # get workspace size and then fire up
     if sort_pairs:
