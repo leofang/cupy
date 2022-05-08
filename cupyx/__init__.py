@@ -23,3 +23,5 @@ from cupyx._pinned_array import zeros_pinned  # NOQA
 from cupyx._pinned_array import zeros_like_pinned  # NOQA
 
 from cupyx._gufunc import GeneralizedUFunc  # NOQA
+
+from cupyx._algorithms import segmented_sort  # NOQA
