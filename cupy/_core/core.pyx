@@ -2164,8 +2164,8 @@ cpdef function.Module compile_with_cache(
                 'Failed to auto-detect ROCm root directory. '
                 'Please specify `ROCM_HOME` environment variable.')
 
-    if _cuda_path is not None:
-        options += ('-I' + os.path.join(_cuda_path, 'include'),)
+#    if _cuda_path is not None:
+#        options += ('-I' + os.path.join(_cuda_path, 'include'),)
 
     return cuda.compiler._compile_module_with_cache(
         source, options, arch, cachd_dir, extra_source, backend,
