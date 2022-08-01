@@ -1,0 +1,23 @@
+#include "cupy_cub.inl"
+
+
+namespace cupy {
+
+void cub_device_scan_cumprod(void* workspace,
+                     size_t& workspace_size,
+                     void* x,
+                     void* y,
+                     int num_items,
+                     cudaStream_t stream) {
+
+    auto _cub_inclusive_product();
+    return dtyper_forwarder<dtype>(_cub_inclusive_product(),
+                                   workspace,
+                                   workspace_size,
+                                   x,
+                                   y,
+                                   num_items,
+                                   stream);
+}
+
+}  // namespace cupy

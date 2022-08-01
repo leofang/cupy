@@ -843,32 +843,6 @@ size_t cub_device_spmv_get_workspace_size(void* values, void* row_offsets,
     return workspace_size;
 }
 
-/* -------- device scan -------- */
-
-void cub_device_scan(void* workspace, size_t& workspace_size, void* x, void* y,
-    int num_items, cudaStream_t stream, int op, int dtype_id)
-{
-    switch(op) {
-    case CUPY_CUB_CUMSUM:
-        return dtype_dispatcher(dtype_id, _cub_inclusive_sum(),
-                                workspace, workspace_size, x, y, num_items, stream);
-    case CUPY_CUB_CUMPROD:
-        return dtype_dispatcher(dtype_id, _cub_inclusive_product(),
-                                workspace, workspace_size, x, y, num_items, stream);
-    default:
-        throw std::runtime_error("Unsupported operation");
-    }
-}
-
-size_t cub_device_scan_get_workspace_size(void* x, void* y, int num_items,
-    cudaStream_t stream, int op, int dtype_id)
-{
-    size_t workspace_size = 0;
-    cub_device_scan(NULL, workspace_size, x, y, num_items, stream,
-                    op, dtype_id);
-    return workspace_size;
-}
-
 /* -------- device histogram -------- */
 
 void cub_device_histogram_range(void* workspace, size_t& workspace_size, void* x, void* y,
