@@ -673,24 +673,8 @@ struct _cub_histogram_range {
     void operator()(void* workspace, size_t& workspace_size, void* input, void* output,
         int n_bins, void* bins, size_t n_samples, cudaStream_t s) const
     {
-        // Ugly hack to avoid specializing complex types, which cub::DeviceHistogram does not support.
-        // The If and Equals templates are from cub/util_type.cuh.
+        // Note: this function does not support complex types
         // TODO(leofang): revisit this part when complex support is added to cupy.histogram()
-        #ifndef CUPY_USE_HIP
-        typedef typename If<(Equals<sampleT, complex<float>>::VALUE || Equals<sampleT, complex<double>>::VALUE),
-                            double,
-                            sampleT>::Type h_sampleT;
-        typedef typename If<(Equals<binT, complex<float>>::VALUE || Equals<binT, complex<double>>::VALUE),
-                            double,
-                            binT>::Type h_binT;
-        #else
-        typedef typename std::conditional<(std::is_same<sampleT, complex<float>>::value || std::is_same<sampleT, complex<double>>::value),
-                                          double,
-                                          sampleT>::type h_sampleT;
-        typedef typename std::conditional<(std::is_same<binT, complex<float>>::value || std::is_same<binT, complex<double>>::value),
-                                          double,
-                                          binT>::type h_binT;
-        #endif
 
         // TODO(leofang): CUB has a bug that when specializing n_samples with type size_t,
         // it would error out. Before the fix (thrust/cub#38) is merged we disable the code
@@ -699,14 +683,14 @@ struct _cub_histogram_range {
 
         // if (n_samples < (1ULL << 31)) {
             int num_samples = n_samples;
-            DeviceHistogram::HistogramRange(workspace, workspace_size, static_cast<h_sampleT*>(input),
+            DeviceHistogram::HistogramRange(workspace, workspace_size, static_cast<sampleT*>(input),
                 #ifndef CUPY_USE_HIP
-                static_cast<long long*>(output), n_bins, static_cast<h_binT*>(bins), num_samples, s);
+                static_cast<long long*>(output), n_bins, static_cast<binT*>(bins), num_samples, s);
                 #else
                 // rocPRIM looks up atomic_add() from the namespace rocprim::detail; there's no way we can
                 // inject a "long long" version as we did for CUDA, so we must do it in "unsigned long long"
                 // and convert later...
-                static_cast<unsigned long long*>(output), n_bins, static_cast<h_binT*>(bins), num_samples, s);
+                static_cast<unsigned long long*>(output), n_bins, static_cast<binT*>(bins), num_samples, s);
                 #endif
         // } else {
         //     DeviceHistogram::HistogramRange(workspace, workspace_size, static_cast<h_sampleT*>(input),
@@ -723,164 +707,14 @@ struct _cub_histogram_even {
     void operator()(void* workspace, size_t& workspace_size, void* input, void* output,
         int& n_bins, int& lower, int& upper, size_t n_samples, cudaStream_t s) const
     {
+        // Note: this function does not support non-integer types
         #ifndef CUPY_USE_HIP
-        // Ugly hack to avoid specializing numerical types
-        typedef typename If<std::is_integral<sampleT>::value, sampleT, int>::Type h_sampleT;
         int num_samples = n_samples;
         static_assert(sizeof(long long) == sizeof(intptr_t), "not supported");
-        DeviceHistogram::HistogramEven(workspace, workspace_size, static_cast<h_sampleT*>(input),
+        DeviceHistogram::HistogramEven(workspace, workspace_size, static_cast<sampleT*>(input),
             static_cast<long long*>(output), n_bins, lower, upper, num_samples, s);
         #else
         throw std::runtime_error("HIP is not supported yet");
         #endif
     }
 };
-
-//
-// APIs exposed to CuPy
-//
-
-/* -------- device reduce -------- */
-
-void cub_device_reduce(void* workspace, size_t& workspace_size, void* x, void* y,
-    int num_items, cudaStream_t stream, int op, int dtype_id)
-{
-    switch(op) {
-    case CUPY_CUB_SUM:      return dtype_dispatcher(dtype_id, _cub_reduce_sum(),
-                                workspace, workspace_size, x, y, num_items, stream);
-    case CUPY_CUB_MIN:      return dtype_dispatcher(dtype_id, _cub_reduce_min(),
-                                workspace, workspace_size, x, y, num_items, stream);
-    case CUPY_CUB_MAX:      return dtype_dispatcher(dtype_id, _cub_reduce_max(),
-                                workspace, workspace_size, x, y, num_items, stream);
-    case CUPY_CUB_ARGMIN:   return dtype_dispatcher(dtype_id, _cub_reduce_argmin(),
-                                workspace, workspace_size, x, y, num_items, stream);
-    case CUPY_CUB_ARGMAX:   return dtype_dispatcher(dtype_id, _cub_reduce_argmax(),
-                                workspace, workspace_size, x, y, num_items, stream);
-    case CUPY_CUB_PROD:     return dtype_dispatcher(dtype_id, _cub_reduce_prod(),
-                                workspace, workspace_size, x, y, num_items, stream);
-    default:            throw std::runtime_error("Unsupported operation");
-    }
-}
-
-size_t cub_device_reduce_get_workspace_size(void* x, void* y, int num_items,
-    cudaStream_t stream, int op, int dtype_id)
-{
-    size_t workspace_size = 0;
-    cub_device_reduce(NULL, workspace_size, x, y, num_items, stream,
-                      op, dtype_id);
-    return workspace_size;
-}
-
-/* -------- device segmented reduce -------- */
-
-void cub_device_segmented_reduce(void* workspace, size_t& workspace_size,
-    void* x, void* y, int num_segments, int segment_size,
-    cudaStream_t stream, int op, int dtype_id)
-{
-    // CUB internally use int for offset...
-    // This iterates over [0, segment_size, 2*segment_size, 3*segment_size, ...]
-    #ifndef CUPY_USE_HIP
-    CountingInputIterator<int> count_itr(0);
-    #else
-    rocprim::counting_iterator<int> count_itr(0);
-    #endif
-    _arange scaling(segment_size);
-    seg_offset_itr itr(count_itr, scaling);
-
-    switch(op) {
-    case CUPY_CUB_SUM:
-        return dtype_dispatcher(dtype_id, _cub_segmented_reduce_sum(),
-                   workspace, workspace_size, x, y, num_segments, itr, stream);
-    case CUPY_CUB_MIN:
-        return dtype_dispatcher(dtype_id, _cub_segmented_reduce_min(),
-                   workspace, workspace_size, x, y, num_segments, itr, stream);
-    case CUPY_CUB_MAX:
-        return dtype_dispatcher(dtype_id, _cub_segmented_reduce_max(),
-                   workspace, workspace_size, x, y, num_segments, itr, stream);
-    case CUPY_CUB_PROD:
-        return dtype_dispatcher(dtype_id, _cub_segmented_reduce_prod(),
-                   workspace, workspace_size, x, y, num_segments, itr, stream);
-    default:
-        throw std::runtime_error("Unsupported operation");
-    }
-}
-
-size_t cub_device_segmented_reduce_get_workspace_size(void* x, void* y,
-    int num_segments, int segment_size,
-    cudaStream_t stream, int op, int dtype_id)
-{
-    size_t workspace_size = 0;
-    cub_device_segmented_reduce(NULL, workspace_size, x, y,
-                                num_segments, segment_size, stream,
-                                op, dtype_id);
-    return workspace_size;
-}
-
-/*--------- device spmv (sparse-matrix dense-vector multiply) ---------*/
-
-void cub_device_spmv(void* workspace, size_t& workspace_size, void* values,
-    void* row_offsets, void* column_indices, void* x, void* y, int num_rows,
-    int num_cols, int num_nonzeros, cudaStream_t stream,
-    int dtype_id)
-{
-    #ifndef CUPY_USE_HIP
-    return dtype_dispatcher(dtype_id, _cub_device_spmv(),
-                            workspace, workspace_size, values, row_offsets,
-                            column_indices, x, y, num_rows, num_cols,
-                            num_nonzeros, stream);
-    #endif
-}
-
-size_t cub_device_spmv_get_workspace_size(void* values, void* row_offsets,
-    void* column_indices, void* x, void* y, int num_rows, int num_cols,
-    int num_nonzeros, cudaStream_t stream, int dtype_id)
-{
-    size_t workspace_size = 0;
-    #ifndef CUPY_USE_HIP
-    cub_device_spmv(NULL, workspace_size, values, row_offsets, column_indices,
-                    x, y, num_rows, num_cols, num_nonzeros, stream, dtype_id);
-    #endif
-    return workspace_size;
-}
-
-/* -------- device histogram -------- */
-
-void cub_device_histogram_range(void* workspace, size_t& workspace_size, void* x, void* y,
-    int n_bins, void* bins, size_t n_samples, cudaStream_t stream, int dtype_id)
-{
-    // TODO(leofang): support complex
-    if (dtype_id == CUPY_TYPE_COMPLEX64 || dtype_id == CUPY_TYPE_COMPLEX128) {
-	    throw std::runtime_error("complex dtype is not yet supported");
-    }
-
-    // TODO(leofang): n_samples is of type size_t, but if it's < 2^31 we cast it to int later
-    return dtype_dispatcher(dtype_id, _cub_histogram_range(),
-                            workspace, workspace_size, x, y, n_bins, bins, n_samples, stream);
-}
-
-size_t cub_device_histogram_range_get_workspace_size(void* x, void* y, int n_bins,
-    void* bins, size_t n_samples, cudaStream_t stream, int dtype_id)
-{
-    size_t workspace_size = 0;
-    cub_device_histogram_range(NULL, workspace_size, x, y, n_bins, bins, n_samples,
-                               stream, dtype_id);
-    return workspace_size;
-}
-
-void cub_device_histogram_even(void* workspace, size_t& workspace_size, void* x, void* y,
-    int n_bins, int lower, int upper, size_t n_samples, cudaStream_t stream, int dtype_id)
-{
-    #ifndef CUPY_USE_HIP
-    return dtype_dispatcher(dtype_id, _cub_histogram_even(),
-                            workspace, workspace_size, x, y, n_bins, lower, upper, n_samples, stream);
-    #endif
-}
-
-size_t cub_device_histogram_even_get_workspace_size(void* x, void* y, int n_bins,
-    int lower, int upper, size_t n_samples, cudaStream_t stream, int dtype_id)
-{
-    size_t workspace_size = 0;
-    cub_device_histogram_even(NULL, workspace_size, x, y, n_bins, lower, upper, n_samples,
-                              stream, dtype_id);
-    return workspace_size;
-}
