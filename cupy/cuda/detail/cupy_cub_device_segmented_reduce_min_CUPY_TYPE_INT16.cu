@@ -26,7 +26,7 @@ void cub_device_segmented_reduce_min_CUPY_TYPE_INT16(void* workspace,
     seg_offset_itr itr(count_itr, scaling);
 
     _cub_segmented_reduce_min op;
-    return dtype_forwarder< short >(op(),
+    return dtype_forwarder< short >(op,
                                          workspace,
                                          workspace_size,
                                          x,

@@ -15,7 +15,7 @@ void cub_device_reduce_max_CUPY_TYPE_UINT64(void* workspace,
             || (defined(__HIPCC__) || defined(CUPY_USE_HIP))))
 
     _cub_reduce_max op;
-    return dtype_forwarder< uint64_t >(op(),
+    return dtype_forwarder< uint64_t >(op,
                                          workspace,
                                          workspace_size,
                                          x,

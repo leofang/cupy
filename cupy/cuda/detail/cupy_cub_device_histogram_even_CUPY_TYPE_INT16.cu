@@ -12,13 +12,14 @@ void cub_device_histogram_even_CUPY_TYPE_INT16(void* workspace,
                                           int upper,
                                           size_t n_samples,
                                           cudaStream_t stream) {
+#ifndef CUPY_USE_HIP
 #if ( CUPY_TYPE_INT16 != CUPY_TYPE_FLOAT16 )                        \
     || (( CUPY_TYPE_INT16 == CUPY_TYPE_FLOAT16 )                    \
         && ((__CUDA_ARCH__ >= 530 || !defined(__CUDA_ARCH__))  \
             || (defined(__HIPCC__) || defined(CUPY_USE_HIP))))
 
     _cub_histogram_even op;
-    return dtype_forwarder< short >(op(),
+    return dtype_forwarder< short >(op,
                                          workspace,
                                          workspace_size,
                                          x,
@@ -30,6 +31,7 @@ void cub_device_histogram_even_CUPY_TYPE_INT16(void* workspace,
                                          stream);
 
 #endif
+#endif  // CUPY_USE_HIP
 }
 
 }  // namespace cupy

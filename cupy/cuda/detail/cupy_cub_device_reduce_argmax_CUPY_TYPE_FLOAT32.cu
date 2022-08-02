@@ -15,7 +15,7 @@ void cub_device_reduce_argmax_CUPY_TYPE_FLOAT32(void* workspace,
             || (defined(__HIPCC__) || defined(CUPY_USE_HIP))))
 
     _cub_reduce_argmax op;
-    return dtype_forwarder< float >(op(),
+    return dtype_forwarder< float >(op,
                                          workspace,
                                          workspace_size,
                                          x,

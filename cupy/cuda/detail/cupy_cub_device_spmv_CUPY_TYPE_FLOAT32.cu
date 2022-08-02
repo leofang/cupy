@@ -14,13 +14,14 @@ void cub_device_spmv_CUPY_TYPE_FLOAT32(void* workspace,
                                 int num_cols,
                                 int num_nonzeros,
                                 cudaStream_t stream) {
+#ifndef CUPY_USE_HIP
 #if ( CUPY_TYPE_FLOAT32 != CUPY_TYPE_FLOAT16 )                        \
     || (( CUPY_TYPE_FLOAT32 == CUPY_TYPE_FLOAT16 )                    \
         && ((__CUDA_ARCH__ >= 530 || !defined(__CUDA_ARCH__))  \
             || (defined(__HIPCC__) || defined(CUPY_USE_HIP))))
 
     _cub_device_spmv op;
-    return dtype_forwarder< float >(op(),
+    return dtype_forwarder< float >(op,
                                          workspace,
                                          workspace_size,
                                          values,
@@ -34,6 +35,7 @@ void cub_device_spmv_CUPY_TYPE_FLOAT32(void* workspace,
                                          stream);
 
 #endif
+#endif  // CUPY_USE_HIP
 }
 
 }  // namespace cupy

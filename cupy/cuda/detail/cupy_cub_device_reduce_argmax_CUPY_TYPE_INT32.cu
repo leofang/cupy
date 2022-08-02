@@ -15,7 +15,7 @@ void cub_device_reduce_argmax_CUPY_TYPE_INT32(void* workspace,
             || (defined(__HIPCC__) || defined(CUPY_USE_HIP))))
 
     _cub_reduce_argmax op;
-    return dtype_forwarder< int >(op(),
+    return dtype_forwarder< int >(op,
                                          workspace,
                                          workspace_size,
                                          x,

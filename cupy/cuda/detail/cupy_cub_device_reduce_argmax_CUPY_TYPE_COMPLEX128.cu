@@ -15,7 +15,7 @@ void cub_device_reduce_argmax_CUPY_TYPE_COMPLEX128(void* workspace,
             || (defined(__HIPCC__) || defined(CUPY_USE_HIP))))
 
     _cub_reduce_argmax op;
-    return dtype_forwarder< complex<double> >(op(),
+    return dtype_forwarder< complex<double> >(op,
                                          workspace,
                                          workspace_size,
                                          x,

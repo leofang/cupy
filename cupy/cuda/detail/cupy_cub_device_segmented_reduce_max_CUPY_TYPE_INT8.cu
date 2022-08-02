@@ -26,7 +26,7 @@ void cub_device_segmented_reduce_max_CUPY_TYPE_INT8(void* workspace,
     seg_offset_itr itr(count_itr, scaling);
 
     _cub_segmented_reduce_max op;
-    return dtype_forwarder< char >(op(),
+    return dtype_forwarder< char >(op,
                                          workspace,
                                          workspace_size,
                                          x,

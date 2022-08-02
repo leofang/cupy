@@ -15,7 +15,7 @@ void cub_device_reduce_sum_CUPY_TYPE_COMPLEX64(void* workspace,
             || (defined(__HIPCC__) || defined(CUPY_USE_HIP))))
 
     _cub_reduce_sum op;
-    return dtype_forwarder< complex<float> >(op(),
+    return dtype_forwarder< complex<float> >(op,
                                          workspace,
                                          workspace_size,
                                          x,

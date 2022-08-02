@@ -718,3 +718,243 @@ struct _cub_histogram_even {
         #endif
     }
 };
+
+
+//
+// Placeholders for storing function pointers to the template specializations
+// Note: no template instatiation should be done in this file!
+//
+
+namespace cupy {
+  using DeviceReduceT = void (void*, size_t&, void*, void*, int, cudaStream_t);
+
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_INT8      ;
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_UINT8     ;
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_INT16     ;
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_UINT16    ;
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_INT32     ;
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_UINT32    ;
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_INT64     ;
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_UINT64    ;
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_FLOAT16   ;
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_FLOAT32   ;
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_FLOAT64   ;
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_COMPLEX64 ;
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_COMPLEX128;
+  extern DeviceReduceT cub_device_reduce_sum_CUPY_TYPE_BOOL      ;
+
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_INT8      ;
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_UINT8     ;
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_INT16     ;
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_UINT16    ;
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_INT32     ;
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_UINT32    ;
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_INT64     ;
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_UINT64    ;
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_FLOAT16   ;
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_FLOAT32   ;
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_FLOAT64   ;
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_COMPLEX64 ;
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_COMPLEX128;
+  extern DeviceReduceT cub_device_reduce_prod_CUPY_TYPE_BOOL      ;
+
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_INT8      ;
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_UINT8     ;
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_INT16     ;
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_UINT16    ;
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_INT32     ;
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_UINT32    ;
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_INT64     ;
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_UINT64    ;
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_FLOAT16   ;
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_FLOAT32   ;
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_FLOAT64   ;
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_COMPLEX64 ;
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_COMPLEX128;
+  extern DeviceReduceT cub_device_reduce_min_CUPY_TYPE_BOOL      ;
+
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_INT8      ;
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_UINT8     ;
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_INT16     ;
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_UINT16    ;
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_INT32     ;
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_UINT32    ;
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_INT64     ;
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_UINT64    ;
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_FLOAT16   ;
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_FLOAT32   ;
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_FLOAT64   ;
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_COMPLEX64 ;
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_COMPLEX128;
+  extern DeviceReduceT cub_device_reduce_max_CUPY_TYPE_BOOL      ;
+
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_INT8      ;
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_UINT8     ;
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_INT16     ;
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_UINT16    ;
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_INT32     ;
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_UINT32    ;
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_INT64     ;
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_UINT64    ;
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_FLOAT16   ;
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_FLOAT32   ;
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_FLOAT64   ;
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_COMPLEX64 ;
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_COMPLEX128;
+  extern DeviceReduceT cub_device_reduce_argmin_CUPY_TYPE_BOOL      ;
+
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_INT8      ;
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_UINT8     ;
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_INT16     ;
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_UINT16    ;
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_INT32     ;
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_UINT32    ;
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_INT64     ;
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_UINT64    ;
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_FLOAT16   ;
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_FLOAT32   ;
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_FLOAT64   ;
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_COMPLEX64 ;
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_COMPLEX128;
+  extern DeviceReduceT cub_device_reduce_argmax_CUPY_TYPE_BOOL      ;
+
+  using DeviceSegmentedReduceT = void (void*, size_t&, void*, void*, int, int, cudaStream_t);
+
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_INT8      ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_UINT8     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_INT16     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_UINT16    ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_INT32     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_UINT32    ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_INT64     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_UINT64    ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_FLOAT16   ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_FLOAT32   ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_FLOAT64   ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_COMPLEX64 ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_COMPLEX128;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_sum_CUPY_TYPE_BOOL      ;
+
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_INT8      ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_UINT8     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_INT16     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_UINT16    ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_INT32     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_UINT32    ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_INT64     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_UINT64    ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_FLOAT16   ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_FLOAT32   ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_FLOAT64   ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_COMPLEX64 ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_COMPLEX128;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_prod_CUPY_TYPE_BOOL      ;
+
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_INT8      ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_UINT8     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_INT16     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_UINT16    ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_INT32     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_UINT32    ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_INT64     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_UINT64    ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_FLOAT16   ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_FLOAT32   ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_FLOAT64   ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_COMPLEX64 ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_COMPLEX128;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_min_CUPY_TYPE_BOOL      ;
+
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_INT8      ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_UINT8     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_INT16     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_UINT16    ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_INT32     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_UINT32    ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_INT64     ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_UINT64    ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_FLOAT16   ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_FLOAT32   ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_FLOAT64   ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_COMPLEX64 ;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_COMPLEX128;
+  extern DeviceSegmentedReduceT cub_device_segmented_reduce_max_CUPY_TYPE_BOOL      ;
+
+  using DeviceScanT = void (void*, size_t&, void*, void*, int, cudaStream_t);
+
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_INT8      ;
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_UINT8     ;
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_INT16     ;
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_UINT16    ;
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_INT32     ;
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_UINT32    ;
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_INT64     ;
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_UINT64    ;
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_FLOAT16   ;
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_FLOAT32   ;
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_FLOAT64   ;
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_COMPLEX64 ;
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_COMPLEX128;
+  extern DeviceScanT cub_device_scan_cumsum_CUPY_TYPE_BOOL      ;
+
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_INT8      ;
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_UINT8     ;
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_INT16     ;
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_UINT16    ;
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_INT32     ;
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_UINT32    ;
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_INT64     ;
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_UINT64    ;
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_FLOAT16   ;
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_FLOAT32   ;
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_FLOAT64   ;
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_COMPLEX64 ;
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_COMPLEX128;
+  extern DeviceScanT cub_device_scan_cumprod_CUPY_TYPE_BOOL      ;
+
+  using DeviceSpmvT = void (void*, size_t&, void*, void*, void*, void*, void*, int, int, int, cudaStream_t);
+
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_INT8      ;
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_UINT8     ;
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_INT16     ;
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_UINT16    ;
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_INT32     ;
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_UINT32    ;
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_INT64     ;
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_UINT64    ;
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_FLOAT16   ;
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_FLOAT32   ;
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_FLOAT64   ;
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_COMPLEX64 ;
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_COMPLEX128;
+  extern DeviceSpmvT cub_device_spmv_CUPY_TYPE_BOOL      ;
+
+  using DeviceHistRangeT = void (void*, size_t&, void*, void*, int, void*, size_t, cudaStream_t);
+
+  extern DeviceHistRangeT cub_device_histogram_range_CUPY_TYPE_INT8      ;
+  extern DeviceHistRangeT cub_device_histogram_range_CUPY_TYPE_UINT8     ;
+  extern DeviceHistRangeT cub_device_histogram_range_CUPY_TYPE_INT16     ;
+  extern DeviceHistRangeT cub_device_histogram_range_CUPY_TYPE_UINT16    ;
+  extern DeviceHistRangeT cub_device_histogram_range_CUPY_TYPE_INT32     ;
+  extern DeviceHistRangeT cub_device_histogram_range_CUPY_TYPE_UINT32    ;
+  extern DeviceHistRangeT cub_device_histogram_range_CUPY_TYPE_INT64     ;
+  extern DeviceHistRangeT cub_device_histogram_range_CUPY_TYPE_UINT64    ;
+  extern DeviceHistRangeT cub_device_histogram_range_CUPY_TYPE_FLOAT16   ;
+  extern DeviceHistRangeT cub_device_histogram_range_CUPY_TYPE_FLOAT32   ;
+  extern DeviceHistRangeT cub_device_histogram_range_CUPY_TYPE_FLOAT64   ;
+  // no complex
+  extern DeviceHistRangeT cub_device_histogram_range_CUPY_TYPE_BOOL      ;
+
+  using DeviceHistEvenT = void (void*, size_t&, void*, void*, int, int, int, size_t, cudaStream_t);
+
+  extern DeviceHistEvenT cub_device_histogram_even_CUPY_TYPE_INT8      ;
+  extern DeviceHistEvenT cub_device_histogram_even_CUPY_TYPE_UINT8     ;
+  extern DeviceHistEvenT cub_device_histogram_even_CUPY_TYPE_INT16     ;
+  extern DeviceHistEvenT cub_device_histogram_even_CUPY_TYPE_UINT16    ;
+  extern DeviceHistEvenT cub_device_histogram_even_CUPY_TYPE_INT32     ;
+  extern DeviceHistEvenT cub_device_histogram_even_CUPY_TYPE_UINT32    ;
+  extern DeviceHistEvenT cub_device_histogram_even_CUPY_TYPE_INT64     ;
+  extern DeviceHistEvenT cub_device_histogram_even_CUPY_TYPE_UINT64    ;
+  // no floating types (including complex)
+  extern DeviceHistEvenT cub_device_histogram_even_CUPY_TYPE_BOOL      ;
+}

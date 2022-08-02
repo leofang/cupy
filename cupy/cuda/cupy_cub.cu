@@ -1,13 +1,267 @@
-#include "cupy_cub.h"  // need to make atomicAdd visible to CUB templates early
+#include <functional>
+
 #include <cupy/type_dispatcher.cuh>
+#include "cupy_cub.h"
+#include "cupy_cub.inl"
 
 
 namespace cupy {
 
+  std::function<cupy::DeviceReduceT> device_reduce_sum_targets[CUPY_NUM_TYPES] = {
+    cub_device_reduce_sum_CUPY_TYPE_INT8      ,
+    cub_device_reduce_sum_CUPY_TYPE_UINT8     ,
+    cub_device_reduce_sum_CUPY_TYPE_INT16     ,
+    cub_device_reduce_sum_CUPY_TYPE_UINT16    ,
+    cub_device_reduce_sum_CUPY_TYPE_INT32     ,
+    cub_device_reduce_sum_CUPY_TYPE_UINT32    ,
+    cub_device_reduce_sum_CUPY_TYPE_INT64     ,
+    cub_device_reduce_sum_CUPY_TYPE_UINT64    ,
+    cub_device_reduce_sum_CUPY_TYPE_FLOAT16   ,
+    cub_device_reduce_sum_CUPY_TYPE_FLOAT32   ,
+    cub_device_reduce_sum_CUPY_TYPE_FLOAT64   ,
+    cub_device_reduce_sum_CUPY_TYPE_COMPLEX64 ,
+    cub_device_reduce_sum_CUPY_TYPE_COMPLEX128,
+    cub_device_reduce_sum_CUPY_TYPE_BOOL      ,
+  };
 
+  std::function<cupy::DeviceReduceT> device_reduce_prod_targets[CUPY_NUM_TYPES] = {
+    cub_device_reduce_prod_CUPY_TYPE_INT8      ,
+    cub_device_reduce_prod_CUPY_TYPE_UINT8     ,
+    cub_device_reduce_prod_CUPY_TYPE_INT16     ,
+    cub_device_reduce_prod_CUPY_TYPE_UINT16    ,
+    cub_device_reduce_prod_CUPY_TYPE_INT32     ,
+    cub_device_reduce_prod_CUPY_TYPE_UINT32    ,
+    cub_device_reduce_prod_CUPY_TYPE_INT64     ,
+    cub_device_reduce_prod_CUPY_TYPE_UINT64    ,
+    cub_device_reduce_prod_CUPY_TYPE_FLOAT16   ,
+    cub_device_reduce_prod_CUPY_TYPE_FLOAT32   ,
+    cub_device_reduce_prod_CUPY_TYPE_FLOAT64   ,
+    cub_device_reduce_prod_CUPY_TYPE_COMPLEX64 ,
+    cub_device_reduce_prod_CUPY_TYPE_COMPLEX128,
+    cub_device_reduce_prod_CUPY_TYPE_BOOL      ,
+  };
+
+  std::function<cupy::DeviceReduceT> device_reduce_min_targets[CUPY_NUM_TYPES] = {
+    cub_device_reduce_min_CUPY_TYPE_INT8      ,
+    cub_device_reduce_min_CUPY_TYPE_UINT8     ,
+    cub_device_reduce_min_CUPY_TYPE_INT16     ,
+    cub_device_reduce_min_CUPY_TYPE_UINT16    ,
+    cub_device_reduce_min_CUPY_TYPE_INT32     ,
+    cub_device_reduce_min_CUPY_TYPE_UINT32    ,
+    cub_device_reduce_min_CUPY_TYPE_INT64     ,
+    cub_device_reduce_min_CUPY_TYPE_UINT64    ,
+    cub_device_reduce_min_CUPY_TYPE_FLOAT16   ,
+    cub_device_reduce_min_CUPY_TYPE_FLOAT32   ,
+    cub_device_reduce_min_CUPY_TYPE_FLOAT64   ,
+    cub_device_reduce_min_CUPY_TYPE_COMPLEX64 ,
+    cub_device_reduce_min_CUPY_TYPE_COMPLEX128,
+    cub_device_reduce_min_CUPY_TYPE_BOOL      ,
+  };
+
+  std::function<cupy::DeviceReduceT> device_reduce_max_targets[CUPY_NUM_TYPES] = {
+    cub_device_reduce_max_CUPY_TYPE_INT8      ,
+    cub_device_reduce_max_CUPY_TYPE_UINT8     ,
+    cub_device_reduce_max_CUPY_TYPE_INT16     ,
+    cub_device_reduce_max_CUPY_TYPE_UINT16    ,
+    cub_device_reduce_max_CUPY_TYPE_INT32     ,
+    cub_device_reduce_max_CUPY_TYPE_UINT32    ,
+    cub_device_reduce_max_CUPY_TYPE_INT64     ,
+    cub_device_reduce_max_CUPY_TYPE_UINT64    ,
+    cub_device_reduce_max_CUPY_TYPE_FLOAT16   ,
+    cub_device_reduce_max_CUPY_TYPE_FLOAT32   ,
+    cub_device_reduce_max_CUPY_TYPE_FLOAT64   ,
+    cub_device_reduce_max_CUPY_TYPE_COMPLEX64 ,
+    cub_device_reduce_max_CUPY_TYPE_COMPLEX128,
+    cub_device_reduce_max_CUPY_TYPE_BOOL      ,
+  };
+
+  std::function<cupy::DeviceReduceT> device_reduce_argmin_targets[CUPY_NUM_TYPES] = {
+    cub_device_reduce_argmin_CUPY_TYPE_INT8      ,
+    cub_device_reduce_argmin_CUPY_TYPE_UINT8     ,
+    cub_device_reduce_argmin_CUPY_TYPE_INT16     ,
+    cub_device_reduce_argmin_CUPY_TYPE_UINT16    ,
+    cub_device_reduce_argmin_CUPY_TYPE_INT32     ,
+    cub_device_reduce_argmin_CUPY_TYPE_UINT32    ,
+    cub_device_reduce_argmin_CUPY_TYPE_INT64     ,
+    cub_device_reduce_argmin_CUPY_TYPE_UINT64    ,
+    cub_device_reduce_argmin_CUPY_TYPE_FLOAT16   ,
+    cub_device_reduce_argmin_CUPY_TYPE_FLOAT32   ,
+    cub_device_reduce_argmin_CUPY_TYPE_FLOAT64   ,
+    cub_device_reduce_argmin_CUPY_TYPE_COMPLEX64 ,
+    cub_device_reduce_argmin_CUPY_TYPE_COMPLEX128,
+    cub_device_reduce_argmin_CUPY_TYPE_BOOL      ,
+  };
+
+  std::function<cupy::DeviceReduceT> device_reduce_argmax_targets[CUPY_NUM_TYPES] = {
+    cub_device_reduce_argmax_CUPY_TYPE_INT8      ,
+    cub_device_reduce_argmax_CUPY_TYPE_UINT8     ,
+    cub_device_reduce_argmax_CUPY_TYPE_INT16     ,
+    cub_device_reduce_argmax_CUPY_TYPE_UINT16    ,
+    cub_device_reduce_argmax_CUPY_TYPE_INT32     ,
+    cub_device_reduce_argmax_CUPY_TYPE_UINT32    ,
+    cub_device_reduce_argmax_CUPY_TYPE_INT64     ,
+    cub_device_reduce_argmax_CUPY_TYPE_UINT64    ,
+    cub_device_reduce_argmax_CUPY_TYPE_FLOAT16   ,
+    cub_device_reduce_argmax_CUPY_TYPE_FLOAT32   ,
+    cub_device_reduce_argmax_CUPY_TYPE_FLOAT64   ,
+    cub_device_reduce_argmax_CUPY_TYPE_COMPLEX64 ,
+    cub_device_reduce_argmax_CUPY_TYPE_COMPLEX128,
+    cub_device_reduce_argmax_CUPY_TYPE_BOOL      ,
+  };
+
+  std::function<cupy::DeviceSegmentedReduceT> device_segmented_reduce_sum_targets[CUPY_NUM_TYPES] = {
+    cub_device_segmented_reduce_sum_CUPY_TYPE_INT8      ,
+    cub_device_segmented_reduce_sum_CUPY_TYPE_UINT8     ,
+    cub_device_segmented_reduce_sum_CUPY_TYPE_INT16     ,
+    cub_device_segmented_reduce_sum_CUPY_TYPE_UINT16    ,
+    cub_device_segmented_reduce_sum_CUPY_TYPE_INT32     ,
+    cub_device_segmented_reduce_sum_CUPY_TYPE_UINT32    ,
+    cub_device_segmented_reduce_sum_CUPY_TYPE_INT64     ,
+    cub_device_segmented_reduce_sum_CUPY_TYPE_UINT64    ,
+    cub_device_segmented_reduce_sum_CUPY_TYPE_FLOAT16   ,
+    cub_device_segmented_reduce_sum_CUPY_TYPE_FLOAT32   ,
+    cub_device_segmented_reduce_sum_CUPY_TYPE_FLOAT64   ,
+    cub_device_segmented_reduce_sum_CUPY_TYPE_COMPLEX64 ,
+    cub_device_segmented_reduce_sum_CUPY_TYPE_COMPLEX128,
+    cub_device_segmented_reduce_sum_CUPY_TYPE_BOOL      ,
+  };
+
+  std::function<cupy::DeviceSegmentedReduceT> device_segmented_reduce_prod_targets[CUPY_NUM_TYPES] = {
+    cub_device_segmented_reduce_prod_CUPY_TYPE_INT8      ,
+    cub_device_segmented_reduce_prod_CUPY_TYPE_UINT8     ,
+    cub_device_segmented_reduce_prod_CUPY_TYPE_INT16     ,
+    cub_device_segmented_reduce_prod_CUPY_TYPE_UINT16    ,
+    cub_device_segmented_reduce_prod_CUPY_TYPE_INT32     ,
+    cub_device_segmented_reduce_prod_CUPY_TYPE_UINT32    ,
+    cub_device_segmented_reduce_prod_CUPY_TYPE_INT64     ,
+    cub_device_segmented_reduce_prod_CUPY_TYPE_UINT64    ,
+    cub_device_segmented_reduce_prod_CUPY_TYPE_FLOAT16   ,
+    cub_device_segmented_reduce_prod_CUPY_TYPE_FLOAT32   ,
+    cub_device_segmented_reduce_prod_CUPY_TYPE_FLOAT64   ,
+    cub_device_segmented_reduce_prod_CUPY_TYPE_COMPLEX64 ,
+    cub_device_segmented_reduce_prod_CUPY_TYPE_COMPLEX128,
+    cub_device_segmented_reduce_prod_CUPY_TYPE_BOOL      ,
+  };
+
+  std::function<cupy::DeviceSegmentedReduceT> device_segmented_reduce_min_targets[CUPY_NUM_TYPES] = {
+    cub_device_segmented_reduce_min_CUPY_TYPE_INT8      ,
+    cub_device_segmented_reduce_min_CUPY_TYPE_UINT8     ,
+    cub_device_segmented_reduce_min_CUPY_TYPE_INT16     ,
+    cub_device_segmented_reduce_min_CUPY_TYPE_UINT16    ,
+    cub_device_segmented_reduce_min_CUPY_TYPE_INT32     ,
+    cub_device_segmented_reduce_min_CUPY_TYPE_UINT32    ,
+    cub_device_segmented_reduce_min_CUPY_TYPE_INT64     ,
+    cub_device_segmented_reduce_min_CUPY_TYPE_UINT64    ,
+    cub_device_segmented_reduce_min_CUPY_TYPE_FLOAT16   ,
+    cub_device_segmented_reduce_min_CUPY_TYPE_FLOAT32   ,
+    cub_device_segmented_reduce_min_CUPY_TYPE_FLOAT64   ,
+    cub_device_segmented_reduce_min_CUPY_TYPE_COMPLEX64 ,
+    cub_device_segmented_reduce_min_CUPY_TYPE_COMPLEX128,
+    cub_device_segmented_reduce_min_CUPY_TYPE_BOOL      ,
+  };
+
+  std::function<cupy::DeviceSegmentedReduceT> device_segmented_reduce_max_targets[CUPY_NUM_TYPES] = {
+    cub_device_segmented_reduce_max_CUPY_TYPE_INT8      ,
+    cub_device_segmented_reduce_max_CUPY_TYPE_UINT8     ,
+    cub_device_segmented_reduce_max_CUPY_TYPE_INT16     ,
+    cub_device_segmented_reduce_max_CUPY_TYPE_UINT16    ,
+    cub_device_segmented_reduce_max_CUPY_TYPE_INT32     ,
+    cub_device_segmented_reduce_max_CUPY_TYPE_UINT32    ,
+    cub_device_segmented_reduce_max_CUPY_TYPE_INT64     ,
+    cub_device_segmented_reduce_max_CUPY_TYPE_UINT64    ,
+    cub_device_segmented_reduce_max_CUPY_TYPE_FLOAT16   ,
+    cub_device_segmented_reduce_max_CUPY_TYPE_FLOAT32   ,
+    cub_device_segmented_reduce_max_CUPY_TYPE_FLOAT64   ,
+    cub_device_segmented_reduce_max_CUPY_TYPE_COMPLEX64 ,
+    cub_device_segmented_reduce_max_CUPY_TYPE_COMPLEX128,
+    cub_device_segmented_reduce_max_CUPY_TYPE_BOOL      ,
+  };
+
+  std::function<cupy::DeviceScanT> device_scan_cumsum_targets[CUPY_NUM_TYPES] = {
+    cub_device_scan_cumsum_CUPY_TYPE_INT8      ,
+    cub_device_scan_cumsum_CUPY_TYPE_UINT8     ,
+    cub_device_scan_cumsum_CUPY_TYPE_INT16     ,
+    cub_device_scan_cumsum_CUPY_TYPE_UINT16    ,
+    cub_device_scan_cumsum_CUPY_TYPE_INT32     ,
+    cub_device_scan_cumsum_CUPY_TYPE_UINT32    ,
+    cub_device_scan_cumsum_CUPY_TYPE_INT64     ,
+    cub_device_scan_cumsum_CUPY_TYPE_UINT64    ,
+    cub_device_scan_cumsum_CUPY_TYPE_FLOAT16   ,
+    cub_device_scan_cumsum_CUPY_TYPE_FLOAT32   ,
+    cub_device_scan_cumsum_CUPY_TYPE_FLOAT64   ,
+    cub_device_scan_cumsum_CUPY_TYPE_COMPLEX64 ,
+    cub_device_scan_cumsum_CUPY_TYPE_COMPLEX128,
+    cub_device_scan_cumsum_CUPY_TYPE_BOOL      ,
+  };
+
+  std::function<cupy::DeviceScanT> device_scan_cumprod_targets[CUPY_NUM_TYPES] = {
+    cub_device_scan_cumprod_CUPY_TYPE_INT8      ,
+    cub_device_scan_cumprod_CUPY_TYPE_UINT8     ,
+    cub_device_scan_cumprod_CUPY_TYPE_INT16     ,
+    cub_device_scan_cumprod_CUPY_TYPE_UINT16    ,
+    cub_device_scan_cumprod_CUPY_TYPE_INT32     ,
+    cub_device_scan_cumprod_CUPY_TYPE_UINT32    ,
+    cub_device_scan_cumprod_CUPY_TYPE_INT64     ,
+    cub_device_scan_cumprod_CUPY_TYPE_UINT64    ,
+    cub_device_scan_cumprod_CUPY_TYPE_FLOAT16   ,
+    cub_device_scan_cumprod_CUPY_TYPE_FLOAT32   ,
+    cub_device_scan_cumprod_CUPY_TYPE_FLOAT64   ,
+    cub_device_scan_cumprod_CUPY_TYPE_COMPLEX64 ,
+    cub_device_scan_cumprod_CUPY_TYPE_COMPLEX128,
+    cub_device_scan_cumprod_CUPY_TYPE_BOOL      ,
+  };
+
+  std::function<cupy::DeviceSpmvT> device_spmv_targets[CUPY_NUM_TYPES] = {
+    cub_device_spmv_CUPY_TYPE_INT8      ,
+    cub_device_spmv_CUPY_TYPE_UINT8     ,
+    cub_device_spmv_CUPY_TYPE_INT16     ,
+    cub_device_spmv_CUPY_TYPE_UINT16    ,
+    cub_device_spmv_CUPY_TYPE_INT32     ,
+    cub_device_spmv_CUPY_TYPE_UINT32    ,
+    cub_device_spmv_CUPY_TYPE_INT64     ,
+    cub_device_spmv_CUPY_TYPE_UINT64    ,
+    cub_device_spmv_CUPY_TYPE_FLOAT16   ,
+    cub_device_spmv_CUPY_TYPE_FLOAT32   ,
+    cub_device_spmv_CUPY_TYPE_FLOAT64   ,
+    cub_device_spmv_CUPY_TYPE_COMPLEX128,
+    cub_device_spmv_CUPY_TYPE_BOOL      ,
+  };
+
+  std::function<cupy::DeviceHistRangeT> device_histogram_range_targets[CUPY_NUM_TYPES] = {
+    cub_device_histogram_range_CUPY_TYPE_INT8      ,
+    cub_device_histogram_range_CUPY_TYPE_UINT8     ,
+    cub_device_histogram_range_CUPY_TYPE_INT16     ,
+    cub_device_histogram_range_CUPY_TYPE_UINT16    ,
+    cub_device_histogram_range_CUPY_TYPE_INT32     ,
+    cub_device_histogram_range_CUPY_TYPE_UINT32    ,
+    cub_device_histogram_range_CUPY_TYPE_INT64     ,
+    cub_device_histogram_range_CUPY_TYPE_UINT64    ,
+    cub_device_histogram_range_CUPY_TYPE_FLOAT16   ,
+    cub_device_histogram_range_CUPY_TYPE_FLOAT32   ,
+    cub_device_histogram_range_CUPY_TYPE_FLOAT64   ,
+    nullptr,
+    nullptr,
+    cub_device_histogram_range_CUPY_TYPE_BOOL      ,
+  };
+
+  std::function<cupy::DeviceHistEvenT> device_histogram_even_targets[CUPY_NUM_TYPES] = {
+    cub_device_histogram_even_CUPY_TYPE_INT8      ,
+    cub_device_histogram_even_CUPY_TYPE_UINT8     ,
+    cub_device_histogram_even_CUPY_TYPE_INT16     ,
+    cub_device_histogram_even_CUPY_TYPE_UINT16    ,
+    cub_device_histogram_even_CUPY_TYPE_INT32     ,
+    cub_device_histogram_even_CUPY_TYPE_UINT32    ,
+    cub_device_histogram_even_CUPY_TYPE_INT64     ,
+    cub_device_histogram_even_CUPY_TYPE_UINT64    ,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    cub_device_histogram_even_CUPY_TYPE_BOOL      ,
+  };
 
 }  // namespace cupy
-
 
 
 //
@@ -20,17 +274,17 @@ void cub_device_reduce(void* workspace, size_t& workspace_size, void* x, void* y
     int num_items, cudaStream_t stream, int op, int dtype_id)
 {
     switch(op) {
-    case CUPY_CUB_SUM:      return dtype_dispatcher(dtype_id, _cub_reduce_sum(),
+    case CUPY_CUB_SUM:      return cupy::device_reduce_sum_targets[dtype_id](
                                 workspace, workspace_size, x, y, num_items, stream);
-    case CUPY_CUB_MIN:      return dtype_dispatcher(dtype_id, _cub_reduce_min(),
+    case CUPY_CUB_PROD:      return cupy::device_reduce_prod_targets[dtype_id](
                                 workspace, workspace_size, x, y, num_items, stream);
-    case CUPY_CUB_MAX:      return dtype_dispatcher(dtype_id, _cub_reduce_max(),
+    case CUPY_CUB_MIN:      return cupy::device_reduce_min_targets[dtype_id](
                                 workspace, workspace_size, x, y, num_items, stream);
-    case CUPY_CUB_ARGMIN:   return dtype_dispatcher(dtype_id, _cub_reduce_argmin(),
+    case CUPY_CUB_MAX:      return cupy::device_reduce_max_targets[dtype_id](
                                 workspace, workspace_size, x, y, num_items, stream);
-    case CUPY_CUB_ARGMAX:   return dtype_dispatcher(dtype_id, _cub_reduce_argmax(),
+    case CUPY_CUB_ARGMIN:      return cupy::device_reduce_argmin_targets[dtype_id](
                                 workspace, workspace_size, x, y, num_items, stream);
-    case CUPY_CUB_PROD:     return dtype_dispatcher(dtype_id, _cub_reduce_prod(),
+    case CUPY_CUB_ARGMAX:      return cupy::device_reduce_argmax_targets[dtype_id](
                                 workspace, workspace_size, x, y, num_items, stream);
     default:            throw std::runtime_error("Unsupported operation");
     }
@@ -51,29 +305,19 @@ void cub_device_segmented_reduce(void* workspace, size_t& workspace_size,
     void* x, void* y, int num_segments, int segment_size,
     cudaStream_t stream, int op, int dtype_id)
 {
-    // CUB internally use int for offset...
-    // This iterates over [0, segment_size, 2*segment_size, 3*segment_size, ...]
-    #ifndef CUPY_USE_HIP
-    CountingInputIterator<int> count_itr(0);
-    #else
-    rocprim::counting_iterator<int> count_itr(0);
-    #endif
-    _arange scaling(segment_size);
-    seg_offset_itr itr(count_itr, scaling);
-
     switch(op) {
-    case CUPY_CUB_SUM:
-        return dtype_dispatcher(dtype_id, _cub_segmented_reduce_sum(),
-                   workspace, workspace_size, x, y, num_segments, itr, stream);
-    case CUPY_CUB_MIN:
-        return dtype_dispatcher(dtype_id, _cub_segmented_reduce_min(),
-                   workspace, workspace_size, x, y, num_segments, itr, stream);
-    case CUPY_CUB_MAX:
-        return dtype_dispatcher(dtype_id, _cub_segmented_reduce_max(),
-                   workspace, workspace_size, x, y, num_segments, itr, stream);
-    case CUPY_CUB_PROD:
-        return dtype_dispatcher(dtype_id, _cub_segmented_reduce_prod(),
-                   workspace, workspace_size, x, y, num_segments, itr, stream);
+      case CUPY_CUB_SUM:
+          return cupy::device_segmented_reduce_sum_targets[dtype_id](
+                     workspace, workspace_size, x, y, num_segments, segment_size, stream);
+      case CUPY_CUB_PROD:
+          return cupy::device_segmented_reduce_prod_targets[dtype_id](
+                     workspace, workspace_size, x, y, num_segments, segment_size, stream);
+      case CUPY_CUB_MIN:
+          return cupy::device_segmented_reduce_min_targets[dtype_id](
+                     workspace, workspace_size, x, y, num_segments, segment_size, stream);
+      case CUPY_CUB_MAX:
+          return cupy::device_segmented_reduce_max_targets[dtype_id](
+                     workspace, workspace_size, x, y, num_segments, segment_size, stream);
     default:
         throw std::runtime_error("Unsupported operation");
     }
@@ -97,12 +341,9 @@ void cub_device_spmv(void* workspace, size_t& workspace_size, void* values,
     int num_cols, int num_nonzeros, cudaStream_t stream,
     int dtype_id)
 {
-    #ifndef CUPY_USE_HIP
-    return dtype_dispatcher(dtype_id, _cub_device_spmv(),
-                            workspace, workspace_size, values, row_offsets,
-                            column_indices, x, y, num_rows, num_cols,
-                            num_nonzeros, stream);
-    #endif
+    return cupy::device_spmv_targets[dtype_id](
+        workspace, workspace_size, values, row_offsets, column_indices,
+        x, y, num_rows, num_cols, num_nonzeros, stream);
 }
 
 size_t cub_device_spmv_get_workspace_size(void* values, void* row_offsets,
@@ -124,10 +365,10 @@ void cub_device_scan(void* workspace, size_t& workspace_size, void* x, void* y,
 {
     switch(op) {
     case CUPY_CUB_CUMSUM:
-        return dtype_dispatcher(dtype_id, _cub_inclusive_sum(),
+        return cupy::device_scan_cumsum_targets[dtype_id](
                                 workspace, workspace_size, x, y, num_items, stream);
     case CUPY_CUB_CUMPROD:
-        return dtype_dispatcher(dtype_id, _cub_inclusive_product(),
+        return cupy::device_scan_cumprod_targets[dtype_id](
                                 workspace, workspace_size, x, y, num_items, stream);
     default:
         throw std::runtime_error("Unsupported operation");
@@ -154,7 +395,7 @@ void cub_device_histogram_range(void* workspace, size_t& workspace_size, void* x
     }
 
     // TODO(leofang): n_samples is of type size_t, but if it's < 2^31 we cast it to int later
-    return dtype_dispatcher(dtype_id, _cub_histogram_range(),
+    return cupy::device_histogram_range_targets[dtype_id](
                             workspace, workspace_size, x, y, n_bins, bins, n_samples, stream);
 }
 
@@ -170,10 +411,8 @@ size_t cub_device_histogram_range_get_workspace_size(void* x, void* y, int n_bin
 void cub_device_histogram_even(void* workspace, size_t& workspace_size, void* x, void* y,
     int n_bins, int lower, int upper, size_t n_samples, cudaStream_t stream, int dtype_id)
 {
-    #ifndef CUPY_USE_HIP
-    return dtype_dispatcher(dtype_id, _cub_histogram_even(),
+    return cupy::device_histogram_even_targets[dtype_id](
                             workspace, workspace_size, x, y, n_bins, lower, upper, n_samples, stream);
-    #endif
 }
 
 size_t cub_device_histogram_even_get_workspace_size(void* x, void* y, int n_bins,

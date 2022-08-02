@@ -12,8 +12,6 @@ def get_cuda_source_data(source_root: str) \
             'sort': f'{source_root}/cupy/cuda/detail/cupy_thrust_sort.template',  # noqa: E501
         },
         'cub': {
-            'cumsum': f'{source_root}/cupy/cuda/detail/cupy_cub_device_scan_cumsum.template',  # noqa: E501
-            'cumprod': f'{source_root}/cupy/cuda/detail/cupy_cub_device_scan_cumprod.template',  # noqa: E501
             'sum': f'{source_root}/cupy/cuda/detail/cupy_cub_device_reduce_sum.template',  # noqa: E501
             'prod': f'{source_root}/cupy/cuda/detail/cupy_cub_device_reduce_prod.template',  # noqa: E501
             'min': f'{source_root}/cupy/cuda/detail/cupy_cub_device_reduce_min.template',  # noqa: E501
@@ -24,6 +22,8 @@ def get_cuda_source_data(source_root: str) \
             's_prod': f'{source_root}/cupy/cuda/detail/cupy_cub_device_segmented_reduce_prod.template',  # noqa: E501
             's_min': f'{source_root}/cupy/cuda/detail/cupy_cub_device_segmented_reduce_min.template',  # noqa: E501
             's_max': f'{source_root}/cupy/cuda/detail/cupy_cub_device_segmented_reduce_max.template',  # noqa: E501
+            'cumsum': f'{source_root}/cupy/cuda/detail/cupy_cub_device_scan_cumsum.template',  # noqa: E501
+            'cumprod': f'{source_root}/cupy/cuda/detail/cupy_cub_device_scan_cumprod.template',  # noqa: E501
             'spmv': f'{source_root}/cupy/cuda/detail/cupy_cub_device_spmv.template',  # noqa: E501
             'hist_range': (f'{source_root}/cupy/cuda/detail/cupy_cub_device_histogram_range.template',  # noqa: E501
                            ['char', 'short', 'int', 'int64_t',

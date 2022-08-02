@@ -15,7 +15,7 @@ void cub_device_scan_cumsum_CUPY_TYPE_INT64(void* workspace,
             || (defined(__HIPCC__) || defined(CUPY_USE_HIP))))
 
     _cub_inclusive_sum op;
-    return dtype_forwarder< int64_t >(op(),
+    return dtype_forwarder< int64_t >(op,
                                          workspace,
                                          workspace_size,
                                          x,

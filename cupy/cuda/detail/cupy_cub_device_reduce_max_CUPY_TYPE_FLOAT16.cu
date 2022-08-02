@@ -15,7 +15,7 @@ void cub_device_reduce_max_CUPY_TYPE_FLOAT16(void* workspace,
             || (defined(__HIPCC__) || defined(CUPY_USE_HIP))))
 
     _cub_reduce_max op;
-    return dtype_forwarder< __half >(op(),
+    return dtype_forwarder< __half >(op,
                                          workspace,
                                          workspace_size,
                                          x,

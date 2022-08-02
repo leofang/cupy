@@ -15,13 +15,13 @@ void cub_device_scan_cumprod_CUPY_TYPE_FLOAT32(void* workspace,
             || (defined(__HIPCC__) || defined(CUPY_USE_HIP))))
 
     _cub_inclusive_product op;
-    return dtyper_forwarder< float >(op(),
-                                          workspace,
-                                          workspace_size,
-                                          x,
-                                          y,
-                                          num_items,
-                                          stream);
+    return dtype_forwarder< float >(op,
+                                         workspace,
+                                         workspace_size,
+                                         x,
+                                         y,
+                                         num_items,
+                                         stream);
 #endif
 }
 

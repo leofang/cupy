@@ -15,7 +15,7 @@ void cub_device_reduce_max_CUPY_TYPE_BOOL(void* workspace,
             || (defined(__HIPCC__) || defined(CUPY_USE_HIP))))
 
     _cub_reduce_max op;
-    return dtype_forwarder< bool >(op(),
+    return dtype_forwarder< bool >(op,
                                          workspace,
                                          workspace_size,
                                          x,

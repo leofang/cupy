@@ -15,7 +15,7 @@ void cub_device_reduce_min_CUPY_TYPE_UINT16(void* workspace,
             || (defined(__HIPCC__) || defined(CUPY_USE_HIP))))
 
     _cub_reduce_min op;
-    return dtype_forwarder< unsigned short >(op(),
+    return dtype_forwarder< unsigned short >(op,
                                          workspace,
                                          workspace_size,
                                          x,

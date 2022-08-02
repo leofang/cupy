@@ -15,7 +15,7 @@ void cub_device_reduce_prod_CUPY_TYPE_INT16(void* workspace,
             || (defined(__HIPCC__) || defined(CUPY_USE_HIP))))
 
     _cub_reduce_prod op;
-    return dtype_forwarder< short >(op(),
+    return dtype_forwarder< short >(op,
                                          workspace,
                                          workspace_size,
                                          x,

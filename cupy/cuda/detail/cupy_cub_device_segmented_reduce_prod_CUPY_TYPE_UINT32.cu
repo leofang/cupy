@@ -26,7 +26,7 @@ void cub_device_segmented_reduce_prod_CUPY_TYPE_UINT32(void* workspace,
     seg_offset_itr itr(count_itr, scaling);
 
     _cub_segmented_reduce_prod op;
-    return dtype_forwarder< unsigned int >(op(),
+    return dtype_forwarder< unsigned int >(op,
                                          workspace,
                                          workspace_size,
                                          x,

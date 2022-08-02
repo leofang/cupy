@@ -18,7 +18,7 @@ void cub_device_histogram_range_CUPY_TYPE_FLOAT16(void* workspace,
 
     // TODO(leofang): n_samples is of type size_t, but if it's < 2^31 we cast it to int later
     _cub_histogram_range op;
-    return dtype_forwarder< __half >(op(),
+    return dtype_forwarder< __half >(op,
                                          workspace,
                                          workspace_size,
                                          x,

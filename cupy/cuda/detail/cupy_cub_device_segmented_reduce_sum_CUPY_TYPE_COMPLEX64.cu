@@ -26,7 +26,7 @@ void cub_device_segmented_reduce_sum_CUPY_TYPE_COMPLEX64(void* workspace,
     seg_offset_itr itr(count_itr, scaling);
 
     _cub_segmented_reduce_sum op;
-    return dtype_forwarder< complex<float> >(op(),
+    return dtype_forwarder< complex<float> >(op,
                                          workspace,
                                          workspace_size,
                                          x,
