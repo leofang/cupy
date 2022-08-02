@@ -1,7 +1,7 @@
 #include <functional>
 
 #include <cupy/type_dispatcher.cuh>
-#include "cupy_cub.h"
+#include "cupy_cub.h"  // need to make atomicAdd visible to CUB templates early
 #include "cupy_cub.inl"
 
 

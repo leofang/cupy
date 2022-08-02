@@ -32,7 +32,8 @@ def get_cuda_source_data(source_root: str) \
                             'bool']),
             'hist_even': (f'{source_root}/cupy/cuda/detail/cupy_cub_device_histogram_even.template',  # noqa: E501
                           ['char', 'short', 'int', 'int64_t',
-                           'unsigned char', 'unsigned short', 'unsigned int', 'uint64_t']),  # noqa: E501
+                           'unsigned char', 'unsigned short', 'unsigned int', 'uint64_t',  # noqa: E501
+                           'bool']),
         }
     }
 
