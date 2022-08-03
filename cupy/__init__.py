@@ -506,6 +506,7 @@ from cupy._logic.truth import in1d  # NOQA
 from cupy._logic.truth import intersect1d  # NOQA
 from cupy._logic.truth import isin  # NOQA
 from cupy._logic.truth import setdiff1d  # NOQA
+from cupy._logic.truth import setxor1d  # NOQA
 from cupy._logic.truth import union1d  # NOQA
 
 
@@ -538,6 +539,7 @@ from cupy._logic.truth import any as sometrue  # NOQA
 # Polynomial functions
 # ------------------------------------------------------------------------------
 from cupy.lib._polynomial import poly1d  # NOQA
+from cupy.lib._routines_poly import poly  # NOQA
 from cupy.lib._routines_poly import polyadd  # NOQA
 from cupy.lib._routines_poly import polysub  # NOQA
 from cupy.lib._routines_poly import polymul  # NOQA
@@ -659,6 +661,7 @@ from cupy._math.misc import minimum  # NOQA
 from cupy._math.misc import nan_to_num  # NOQA
 from cupy._math.misc import real_if_close  # NOQA
 from cupy._math.misc import sign  # NOQA
+from cupy._math.misc import heaviside  # NOQA
 from cupy._math.misc import sqrt  # NOQA
 from cupy._math.misc import square  # NOQA
 from cupy._math.misc import convolve  # NOQA

@@ -5,7 +5,7 @@ import platform
 import shutil
 import sys
 import subprocess
-from typing import Optional, List
+from typing import Any, Optional, List
 
 import setuptools
 import setuptools.msvc
@@ -63,17 +63,32 @@ def _nvcc_gencode_options(cuda_version: int) -> List[str]:
         #
         #   https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#options-for-steering-gpu-code-generation
 
+        aarch64 = (platform.machine() == 'aarch64')
         if cuda_version >= 11040:
-            arch_list = ['compute_35',
-                         'compute_50',
+            # To utilize CUDA Minor Version Compatibility (`cupy-cuda11x`),
+            # CUBIN must be generated for all supported compute capabilities
+            # instead of PTX:
+            # https://docs.nvidia.com/deploy/cuda-compatibility/index.html#application-considerations
+            arch_list = [('compute_35', 'sm_35'),
+                         ('compute_37', 'sm_37'),
+                         ('compute_50', 'sm_50'),
+                         ('compute_52', 'sm_52'),
                          ('compute_60', 'sm_60'),
                          ('compute_61', 'sm_61'),
                          ('compute_70', 'sm_70'),
                          ('compute_75', 'sm_75'),
                          ('compute_80', 'sm_80'),
                          ('compute_86', 'sm_86'),
-                         ('compute_87', 'sm_87'),
-                         'compute_87']
+                         'compute_86']
+            if aarch64:
+                # Jetson TX1/TX2 are excluded as they don't support JetPack 5
+                # (CUDA 11.4).
+                arch_list += [
+                    # ('compute_53', 'sm_53'),  # Jetson (TX1 / Nano)
+                    # ('compute_62', 'sm_62'),  # Jetson (TX2)
+                    ('compute_72', 'sm_72'),  # Jetson (Xavier)
+                    ('compute_87', 'sm_87'),  # Jetson (Orin)
+                ]
         elif cuda_version >= 11010:
             arch_list = ['compute_35',
                          'compute_50',
@@ -127,9 +142,9 @@ class DeviceCompilerBase:
     def _get_preprocess_options(self, ext: Extension) -> List[str]:
         # https://setuptools.pypa.io/en/latest/deprecated/distutils/apiref.html#distutils.core.Extension
         # https://github.com/pypa/setuptools/blob/v60.0.0/setuptools/_distutils/command/build_ext.py#L524-L526
-        incdirs = ext.include_dirs[:]  # type: ignore
-        macros = ext.define_macros[:]  # type: ignore
-        for undef in ext.undef_macros:  # type: ignore
+        incdirs = ext.include_dirs[:]
+        macros: List[Any] = ext.define_macros[:]
+        for undef in ext.undef_macros:
             macros.append((undef,))
         return distutils.ccompiler.gen_preprocess_options(macros, incdirs)
 

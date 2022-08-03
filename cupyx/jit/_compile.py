@@ -254,7 +254,11 @@ class Environment:
 
     def get_fresh_variable_name(self, prefix='', suffix=''):
         self.count += 1
-        return f'{prefix}{self.count}{suffix}'
+        name = f'{prefix}{self.count}{suffix}'
+        if self[name] is None:
+            return name
+        else:
+            return self.get_fresh_variable_name(prefix, suffix)
 
 
 def _transpile_function(
@@ -464,13 +468,18 @@ def _transpile_stmt(stmt, is_toplevel, env):
     if isinstance(stmt, ast.AugAssign):
         value = _transpile_expr(stmt.value, env)
         target = _transpile_expr(stmt.target, env)
-        assert isinstance(target, Data)
+        if not isinstance(target, Data):
+            raise TypeError(f'Cannot augassign to {target.code}')
         value = Data.init(value, env)
-        result = _eval_operand(stmt.op, (target, value), env)
+        tmp = Data(env.get_fresh_variable_name('_tmp_'), target.ctype)
+        result = _eval_operand(stmt.op, (tmp, value), env)
         if not numpy.can_cast(
                 result.ctype.dtype, target.ctype.dtype, 'same_kind'):
-            raise TypeError('dtype mismatch')
-        return [target.ctype.assign(target, result) + ';']
+            raise TypeError(
+                f'dtype mismatch: {result.ctype.dtype}'
+                f' and {target.ctype.dtype}')
+        return ['{ ' + target.ctype.declvar('&' + tmp.code, target) + '; ' +
+                target.ctype.assign(tmp, result) + '; }']
 
     if isinstance(stmt, ast.For):
         if len(stmt.orelse) > 0:
@@ -632,11 +641,18 @@ def _transpile_expr_internal(expr, env):
 
         func = func.obj
 
-        if is_constants(*args, *kwargs.values()):
-            # compile-time function call
-            args = [x.obj for x in args]
-            kwargs = dict([(k, v.obj) for k, v in kwargs.items()])
-            return Constant(func(*args, **kwargs))
+        if isinstance(func, _interface._JitRawKernel):
+            if not func._device:
+                raise TypeError(
+                    f'Calling __global__ function {func.__name__} '
+                    'from __global__ funcion is not allowed.')
+            args = [Data.init(x, env) for x in args]
+            in_types = tuple([x.ctype for x in args])
+            fname, return_type = _transpile_func_obj(
+                func._func, ['__device__'], env.mode,
+                in_types, None, env.generated)
+            in_params = ', '.join([x.code for x in args])
+            return Data(f'{fname}({in_params})', return_type)
 
         if isinstance(func, _kernel.ufunc):
             # ufunc call
@@ -647,6 +663,12 @@ def _transpile_expr_internal(expr, env):
                     f"'{name}' is an invalid keyword to ufunc {func.name}")
             return _call_ufunc(func, args, dtype, env)
 
+        if is_constants(*args, *kwargs.values()):
+            # compile-time function call
+            args = [x.obj for x in args]
+            kwargs = dict([(k, v.obj) for k, v in kwargs.items()])
+            return Constant(func(*args, **kwargs))
+
         if inspect.isclass(func) and issubclass(func, _typeclasses):
             # explicit typecast
             if len(args) != 1:
@@ -655,16 +677,7 @@ def _transpile_expr_internal(expr, env):
             ctype = _cuda_types.Scalar(func)
             return _astype_scalar(args[0], ctype, 'unsafe', env)
 
-        if isinstance(func, _interface._JitRawKernel) and func._device:
-            args = [Data.init(x, env) for x in args]
-            in_types = tuple([x.ctype for x in args])
-            fname, return_type = _transpile_func_obj(
-                func._func, ['__device__'], env.mode,
-                in_types, None, env.generated)
-            in_params = ', '.join([x.code for x in args])
-            return Data(f'{fname}({in_params})', return_type)
-
-        raise TypeError(f"Invalid function call '{fname}'.")
+        raise TypeError(f"Invalid function call '{func.__name__}'.")
 
     if isinstance(expr, ast.Constant):
         return Constant(expr.value)
@@ -707,9 +720,9 @@ def _transpile_expr_internal(expr, env):
                 types = [_cuda_types.PtrDiff()]*value.ctype.ndim
                 return Data(f'{value.code}.get_{expr.attr}()',
                             _cuda_types.Tuple(types))
-        if isinstance(value.ctype, _interface._Dim3):
+        if isinstance(value.ctype, _cuda_types.Dim3):
             if expr.attr in ('x', 'y', 'z'):
-                return Data(f'{value.code}.{expr.attr}', _cuda_types.uint32)
+                return getattr(value.ctype, expr.attr)(value.code)
         # TODO(leofang): support arbitrary Python class methods
         if isinstance(value.ctype, _ThreadGroup):
             return _internal_types.BuiltinFunc.from_class_method(
