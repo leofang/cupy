@@ -583,9 +583,9 @@ cpdef cub_scan(_ndarray_base arr, op):
 
 
 def device_segmented_sort(
-        ndarray keys, ndarray offset,
-        ndarray values=None, bint ascending=True):
-    cdef ndarray keys_out, values_out
+        _ndarray_base keys, _ndarray_base offset,
+        _ndarray_base values=None, bint ascending=True):
+    cdef _ndarray_base keys_out, values_out
     cdef memory.MemoryPointer ws
     cdef void* keys_ptr
     cdef void* values_ptr
@@ -602,13 +602,13 @@ def device_segmented_sort(
     # prepare input
     keys = _internal_ascontiguousarray(keys)
     keys_ptr = <void*>keys.data.ptr
-    keys_out = ndarray(keys.shape, dtype=keys.dtype)
+    keys_out = _core.ndarray(keys.shape, dtype=keys.dtype)
     keys_out_ptr = <void*>keys_out.data.ptr
     keys_dtype_id = common._get_dtype_id(keys.dtype)
     if values is not None:
         values = _internal_ascontiguousarray(values)
         values_ptr = <void*>values.data.ptr
-        values_out = ndarray(values.shape, dtype=values.dtype)
+        values_out = _core.ndarray(values.shape, dtype=values.dtype)
         values_out_ptr = <void*>values_out.data.ptr
         sort_pairs = True
         values_dtype_id = common._get_dtype_id(values.dtype)
