@@ -910,7 +910,7 @@ cpdef _geqrf_orgqr_batched(a, mode):
         raise ValueError(msg)
 
     # this wrapper also sets the stream for us
-    buffersize = geqrf_bufferSize(handle, m, n, x.data.ptr, n)
+    buffersize = geqrf_bufferSize(handle, m, n, x.data.ptr, m)
     # we are on the same stream, so the workspace can be reused in the loop
     workspace = memory.alloc(buffersize * a.dtype.itemsize)
     w_ptr = workspace.ptr
