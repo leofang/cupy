@@ -330,7 +330,7 @@ def qr(a, mode='reduced'):
         raise ValueError(msg)
 
     # compute working space of geqrf and solve R
-    buffersize = geqrf_bufferSize(handle, m, n, x.data.ptr, n)
+    buffersize = geqrf_bufferSize(handle, m, n, x.data.ptr, m)
     workspace = cupy.empty(buffersize, dtype=dtype)
     tau = cupy.empty(k, dtype=dtype)
     geqrf(handle, m, n, x.data.ptr, m,
