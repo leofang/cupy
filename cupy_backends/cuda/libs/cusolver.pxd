@@ -22,6 +22,7 @@ cdef extern from *:
 
     ctypedef int EigType 'cusolverEigType_t'
     ctypedef int EigMode 'cusolverEigMode_t'
+    ctypedef int EigRange 'cusolverEigRange_t'
 
     ctypedef void* MatDescr 'cusparseMatDescr_t'
 
@@ -602,6 +603,40 @@ cpdef cheevd(intptr_t handle, int jobz, int uplo, int n, size_t A, int lda,
              size_t W, size_t work, int lwork, size_t info)
 cpdef zheevd(intptr_t handle, int jobz, int uplo, int n, size_t A, int lda,
              size_t W, size_t work, int lwork, size_t info)
+
+cpdef int ssyevdx_bufferSize(intptr_t handle, int jobz, int range, int uplo,
+                             int n, intptr_t A, int lda, float vl, float vu,
+                             int il, int iu, intptr_t h_meig, intptr_t W) \
+                             except? -1
+cpdef int dsyevdx_bufferSize(intptr_t handle, int jobz, int range, int uplo,
+                             int n, intptr_t A, int lda, double vl, double vu,
+                             int il, int iu, intptr_t h_meig, intptr_t W) \
+                             except? -1
+cpdef int cheevdx_bufferSize(intptr_t handle, int jobz, int range, int uplo,
+                             int n, intptr_t A, int lda, float vl, float vu,
+                             int il, int iu, intptr_t h_meig, intptr_t W) \
+                             except? -1
+cpdef int zheevdx_bufferSize(intptr_t handle, int jobz, int range, int uplo,
+                             int n, intptr_t A, int lda, double vl, double vu,
+                             int il, int iu, intptr_t h_meig, intptr_t W) \
+                             except? -1
+
+cpdef ssyevdx(intptr_t handle, int jobz, int range, int uplo,
+              int n, intptr_t A, int lda, float vl, float vu,
+              int il, int iu, intptr_t h_meig, intptr_t W,
+              intptr_t work, int lwork, intptr_t info)
+cpdef dsyevdx(intptr_t handle, int jobz, int range, int uplo,
+              int n, intptr_t A, int lda, double vl, double vu,
+              int il, int iu, intptr_t h_meig, intptr_t W,
+              intptr_t work, int lwork, intptr_t info)
+cpdef cheevdx(intptr_t handle, int jobz, int range, int uplo,
+              int n, intptr_t A, int lda, float vl, float vu,
+              int il, int iu, intptr_t h_meig, intptr_t W,
+              intptr_t work, int lwork, intptr_t info)
+cpdef zheevdx(intptr_t handle, int jobz, int range, int uplo,
+              int n, intptr_t A, int lda, double vl, double vu,
+              int il, int iu, intptr_t h_meig, intptr_t W,
+              intptr_t work, int lwork, intptr_t info)
 
 # TODO(anaruse); sygvd/hegvd, sygvd/hegvd
 

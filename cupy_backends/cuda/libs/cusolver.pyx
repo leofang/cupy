@@ -845,6 +845,32 @@ cdef extern from '../../cupy_lapack.h' nogil:
                          cuDoubleComplex* A, int lda, double* W,
                          cuDoubleComplex* work, int lwork, int* info)
 
+    int cusolverDnSsyevdx_bufferSize(Handle, EigMode, EigRange, FillMode, int,
+                                     const float*, int, float, float, int, int,
+                                     int*, const float*, int*)
+    int cusolverDnDsyevdx_bufferSize(Handle, EigMode, EigRange, FillMode, int,
+                                     const double*, int, double, double, int,
+                                     int, int*, const double*, int*)
+    int cusolverDnCheevdx_bufferSize(Handle, EigMode, EigRange, FillMode, int,
+                                     const cuComplex*, int, float, float, int,
+                                     int, int*, const float*, int*)
+    int cusolverDnZheevdx_bufferSize(Handle, EigMode, EigRange, FillMode, int,
+                                     const cuDoubleComplex*, int, double, double,
+                                     int, int, int*, const double*, int*)
+
+    int cusolverDnSsyevdx(Handle, EigMode, EigRange, FillMode, int,
+                          float*, int, float, float, int, int,
+                          int*, float*, float*, int, int*)
+    int cusolverDnDsyevdx(Handle, EigMode, EigRange, FillMode, int,
+                          double*, int, double, double, int,
+                          int, int*, double*, double*, int, int*)
+    int cusolverDnCheevdx(Handle, EigMode, EigRange, FillMode, int,
+                          cuComplex*, int, float, float, int,
+                          int, int*, float*, cuComplex*, int, int*)
+    int cusolverDnZheevdx(Handle, EigMode, EigRange, FillMode, int,
+                          cuDoubleComplex*, int, double, double,
+                          int, int, int*, double*, cuDoubleComplex*, int, int*)
+
     # Symmetric eigenvalue solver using Jacobi method
     int cusolverDnCreateSyevjInfo(SyevjInfo *info)
     int cusolverDnDestroySyevjInfo(SyevjInfo info)
@@ -3214,6 +3240,114 @@ cpdef zheevd(intptr_t handle, int jobz, int uplo, int n, size_t A, int lda,
             <Handle>handle, <EigMode>jobz, <FillMode>uplo, n,
             <cuDoubleComplex*>A, lda, <double*>W,
             <cuDoubleComplex*>work, lwork, <int*>info)
+    check_status(status)
+
+cpdef int ssyevdx_bufferSize(intptr_t handle, int jobz, int range, int uplo,
+                             int n, intptr_t A, int lda, float vl, float vu,
+                             int il, int iu, intptr_t h_meig, intptr_t W) \
+                             except? -1:
+    cdef int lwork, status
+    _setStream(handle)
+    with nogil:
+        status = cusolverDnSsyevdx_bufferSize(
+            <Handle>handle, <EigMode>jobz, <EigRange>range, <FillMode>uplo,
+            n, <const float*>A, lda, vl, vu, il, iu, <int*>h_meig,
+            <const float*>W, &lwork)
+    check_status(status)
+    return lwork
+
+cpdef int dsyevdx_bufferSize(intptr_t handle, int jobz, int range, int uplo,
+                             int n, intptr_t A, int lda, double vl, double vu,
+                             int il, int iu, intptr_t h_meig, intptr_t W) \
+                             except? -1:
+    cdef int lwork, status
+    _setStream(handle)
+    with nogil:
+        status = cusolverDnDsyevdx_bufferSize(
+            <Handle>handle, <EigMode>jobz, <EigRange>range, <FillMode>uplo,
+            n, <const double*>A, lda, vl, vu, il, iu, <int*>h_meig,
+            <const double*>W, &lwork)
+    check_status(status)
+    return lwork
+
+cpdef int cheevdx_bufferSize(intptr_t handle, int jobz, int range, int uplo,
+                             int n, intptr_t A, int lda, float vl, float vu,
+                             int il, int iu, intptr_t h_meig, intptr_t W) \
+                             except? -1:
+    cdef int lwork, status
+    _setStream(handle)
+    with nogil:
+        status = cusolverDnCheevdx_bufferSize(
+            <Handle>handle, <EigMode>jobz, <EigRange>range, <FillMode>uplo,
+            n, <const cuComplex*>A, lda, vl, vu, il, iu, <int*>h_meig,
+            <const float*>W, &lwork)
+    check_status(status)
+    return lwork
+
+cpdef int zheevdx_bufferSize(intptr_t handle, int jobz, int range, int uplo,
+                             int n, intptr_t A, int lda, double vl, double vu,
+                             int il, int iu, intptr_t h_meig, intptr_t W) \
+                             except? -1:
+    cdef int lwork, status
+    _setStream(handle)
+    with nogil:
+        status = cusolverDnZheevdx_bufferSize(
+            <Handle>handle, <EigMode>jobz, <EigRange>range, <FillMode>uplo,
+            n, <const cuDoubleComplex*>A, lda, vl, vu, il, iu, <int*>h_meig,
+            <const double*>W, &lwork)
+    check_status(status)
+    return lwork
+
+cpdef ssyevdx(intptr_t handle, int jobz, int range, int uplo,
+              int n, intptr_t A, int lda, float vl, float vu,
+              int il, int iu, intptr_t h_meig, intptr_t W,
+              intptr_t work, int lwork, intptr_t info):
+    cdef int status
+    _setStream(handle)
+    with nogil:
+        status = cusolverDnSsyevdx(
+            <Handle>handle, <EigMode>jobz, <EigRange>range, <FillMode>uplo,
+            n, <float*>A, lda, vl, vu, il, iu, <int*>h_meig,
+            <float*>W, <float*>work, lwork, <int*>info)
+    check_status(status)
+
+cpdef dsyevdx(intptr_t handle, int jobz, int range, int uplo,
+              int n, intptr_t A, int lda, double vl, double vu,
+              int il, int iu, intptr_t h_meig, intptr_t W,
+              intptr_t work, int lwork, intptr_t info):
+    cdef int status
+    _setStream(handle)
+    with nogil:
+        status = cusolverDnDsyevdx(
+            <Handle>handle, <EigMode>jobz, <EigRange>range, <FillMode>uplo,
+            n, <double*>A, lda, vl, vu, il, iu, <int*>h_meig,
+            <double*>W, <double*>work, lwork, <int*>info)
+    check_status(status)
+
+cpdef cheevdx(intptr_t handle, int jobz, int range, int uplo,
+              int n, intptr_t A, int lda, float vl, float vu,
+              int il, int iu, intptr_t h_meig, intptr_t W,
+              intptr_t work, int lwork, intptr_t info):
+    cdef int status
+    _setStream(handle)
+    with nogil:
+        status = cusolverDnCheevdx(
+            <Handle>handle, <EigMode>jobz, <EigRange>range, <FillMode>uplo,
+            n, <cuComplex*>A, lda, vl, vu, il, iu, <int*>h_meig,
+            <float*>W, <cuComplex*>work, lwork, <int*>info)
+    check_status(status)
+
+cpdef zheevdx(intptr_t handle, int jobz, int range, int uplo,
+              int n, intptr_t A, int lda, double vl, double vu,
+              int il, int iu, intptr_t h_meig, intptr_t W,
+              intptr_t work, int lwork, intptr_t info):
+    cdef int status
+    _setStream(handle)
+    with nogil:
+        status = cusolverDnZheevdx(
+            <Handle>handle, <EigMode>jobz, <EigRange>range, <FillMode>uplo,
+            n, <cuDoubleComplex*>A, lda, vl, vu, il, iu, <int*>h_meig,
+            <double*>W, <cuDoubleComplex*>work, lwork, <int*>info)
     check_status(status)
 
 # Symmetric eigenvalue solver via Jacobi method
