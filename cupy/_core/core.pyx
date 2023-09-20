@@ -2608,8 +2608,9 @@ cdef _ndarray_base _array_default(obj, dtype, order, Py_ssize_t ndmin):
     # Fast path: zero-copy a NumPy array if possible
     if (is_hmm_supported(device.get_device_id())
             and isinstance(obj, numpy.ndarray)
-            # strides and the requested order could mismatch, in this case the
-            # expected behavior is to copy
+            # dtype should not change
+            and (obj.dtype == get_dtype(dtype) if dtype is not None else True)
+            # strides and the requested order could mismatch
             and _is_layout_expected(
                 obj.flags.c_contiguous, obj.flags.f_contiguous, order)):
         if obj.dtype.char not in _dtype.all_type_chars:
