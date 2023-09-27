@@ -266,9 +266,6 @@ cdef class SystemMemory(BaseMemory):
         size (int): Size of the memory allocation in bytes.
     """
 
-    cdef:
-        readonly object _owner
-
     def __init__(self, size_t size):
         self.size = size
         # TODO(leofang): using the GPU id may not be ideal, but setting it
@@ -280,7 +277,7 @@ cdef class SystemMemory(BaseMemory):
         self._owner = None
 
     @staticmethod
-    def from_external(intptr_t ptr, size_t size, object owner):
+    cdef from_external(intptr_t ptr, size_t size, object owner):
         """Warp externally allocated (not owned by CuPy) system memory.
 
         Args:
