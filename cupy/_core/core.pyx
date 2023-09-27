@@ -2472,7 +2472,7 @@ cpdef _ndarray_base array(obj, dtype=None, bint copy=True, order='K',
         return _array_from_nested_sequence(
             obj, dtype, order, ndmin, concat_shape, concat_type, concat_dtype)
 
-    return _array_default(obj, dtype, order, ndmin)
+    return _array_default(obj, dtype, copy, order, ndmin)
 
 
 cdef _ndarray_base _array_from_cupy_ndarray(
@@ -2620,7 +2620,10 @@ cdef inline bint _is_alignment_expected(intptr_t ptr, int min_size) noexcept:
 
 
 cdef inline _ndarray_base _try_skip_h2d_copy(
-        obj, dtype, order, Py_ssize_t ndmin):
+        obj, dtype, bint copy, order, Py_ssize_t ndmin):
+    if copy:
+        return None
+
     if not is_hmm_supported(device.get_device_id()):
         return None
 
@@ -2634,11 +2637,6 @@ cdef inline _ndarray_base _try_skip_h2d_copy(
 
     # CuPy onlt supports numerical dtypes
     if obj_dtype.char not in _dtype.all_type_chars:
-        return None
-
-    # WAR: not sure why this is needed...
-    # it seems complex numbers are giving us a headache
-    if obj_dtype.kind == 'c':
         return None
 
     # strides and the requested order could mismatch
@@ -2658,11 +2656,6 @@ cdef inline _ndarray_base _try_skip_h2d_copy(
     if ndmin > ndim:
         shape = (1,) * (ndmin - ndim) + shape
 
-    # FIXME: for testing only
-    #stream = stream_module.get_current_stream()
-    #stream.synchronize()
-    #runtime.deviceSynchronize()
-
     ext_mem = memory_module.SystemMemory.from_external(
         ptr, obj.nbytes, obj)
     memptr = memory.MemoryPointer(ext_mem, 0)
@@ -2670,11 +2663,12 @@ cdef inline _ndarray_base _try_skip_h2d_copy(
         shape, obj_dtype, memptr, obj.strides)
 
 
-cdef _ndarray_base _array_default(obj, dtype, order, Py_ssize_t ndmin):
+cdef _ndarray_base _array_default(
+        obj, dtype, bint copy, order, Py_ssize_t ndmin):
     cdef _ndarray_base a
 
     # Fast path: zero-copy a NumPy array if possible
-    a = _try_skip_h2d_copy(obj, dtype, order, ndmin)
+    a = _try_skip_h2d_copy(obj, dtype, copy, order, ndmin)
     if a is not None:
         return a
 
