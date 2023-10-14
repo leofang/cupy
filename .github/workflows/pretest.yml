@@ -84,7 +84,8 @@ jobs:
     - name: Docs Build
       run: |
         # Test to detect invalid escape sequences in docstrings (#1619)
-        python -Werror::DeprecationWarning -m compileall -f -q cupy cupyx examples tests docs
+        # Skip checking any Python files from external dependencies
+        python -Werror::DeprecationWarning -m compileall -f -q cupy cupyx examples tests docs -x "include/cupy/cccl/"
         pushd docs
         pip install -r requirements.txt
         SPHINXOPTS="-W --keep-going -j 4" make html
@@ -96,8 +97,11 @@ jobs:
 
         # Test lazy-imported CUDA Toolkit library.
         rm cupy/cuda/cufft.*.so
+        rm cupy/random/_generator_api.*.so
         rm cupy_backends/cuda/libs/cusolver.*.so
         rm cupy_backends/cuda/libs/cusparse.*.so
+        rm cupy_backends/cuda/libs/curand.*.so
+        rm cupy_backends/cuda/libs/cublas.*.so
         python -c 'import cupy, cupyx'
 
   build-rocm:
