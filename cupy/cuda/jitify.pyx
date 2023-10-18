@@ -10,8 +10,10 @@ from libcpp.string cimport string as cpp_str
 from libcpp.utility cimport pair
 from libcpp.vector cimport vector
 
+import json
 import os
 import tempfile
+import time
 
 from cupy.cuda import cub
 
@@ -162,10 +164,24 @@ cdef inline void dump_cache() except*:
 
     # Set up a temporary file; it must be under the cache directory so
     # that atomic moves within the same filesystem can be guaranteed
+
+    t1 = time.time_ns()
     with tempfile.NamedTemporaryFile(
             dir=_jitify_cache_dir, delete=False) as f:
         serialize(cupy_headers_for_cache, f)
         f_name = f.name
+
+    t2 = time.time_ns()
+    with tempfile.NamedTemporaryFile(
+            mode='w', dir=_jitify_cache_dir, delete=False) as f:
+        json.dump({
+            k.decode(): v.decode()
+            for (k, v) in cupy_headers_for_cache
+        }, f)
+    t3 = time.time_ns()
+
+    print('binary:', t2-t1)
+    print('json  :', t3-t2)
 
     # atomic move with the destination guaranteed to be overwritten
     os.replace(f_name, f'{_jitify_cache_dir}/jitify.cache')
@@ -241,7 +257,8 @@ cdef inline void _init_cupy_headers_from_scratch() except*:
     global _jitify_init
     _jitify_init = True
 
-    dump_cache()
+    for i in range(10):
+        dump_cache()
 
 
 cdef inline void _init_cupy_headers() except*:
