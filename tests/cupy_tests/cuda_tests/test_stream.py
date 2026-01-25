@@ -367,16 +367,6 @@ class TestCUDAStreamProtocol:
         with pytest.raises(TypeError, match='does not implement'):
             cuda.Stream.from_external(obj)
 
-    @pytest.mark.parametrize('bad_version', [1, -1])
-    def test_from_external_invalid_version(self, bad_version):
-        # Test unsupported protocol version
-        class BadStream5:
-            def __cuda_stream__(self):
-                return (bad_version, 12345)  # Version is not supported
-
-        with pytest.raises(TypeError, match='unsupported version'):
-            cuda.Stream.from_external(BadStream5())
-
     @pytest.mark.parametrize(
         'bad_return, expected_error, expected_match',
         [
@@ -384,6 +374,8 @@ class TestCUDAStreamProtocol:
             ((0,), TypeError, 'must return a 2-tuple'),
             (('not_an_int', 0), TypeError, r'must return \(int, int\)'),
             ((0, 'not_an_int'), TypeError, r'must return \(int, int\)'),
+            ((1, 12345), TypeError, 'unsupported version'),
+            ((-1, 12345), TypeError, 'unsupported version'),
         ],
     )
     def test_from_external_invalid_returns(
