@@ -706,6 +706,100 @@ class TestRaw:
         y = cupy.arange(N*2, dtype=cupy.uint32) % N
         assert (x == y).all()
 
+    def test_activemask(self):
+        @jit.rawkernel()
+        def f(arr):
+            laneId = jit.laneid()
+            # All threads in the warp are active
+            mask = jit.activemask()
+            arr[laneId] = mask
+
+        N = cupy._core._get_warpsize()
+        x = cupy.zeros((N,), dtype=cupy.uint32)
+        f((1,), (N,), (x,))
+        # All threads should see the same full warp mask
+        expected_mask = (1 << N) - 1 if N == 32 else 0xffffffffffffffff
+        assert (x == expected_mask).all()
+
+    def test_popc(self):
+        @jit.rawkernel()
+        def f(arr, out):
+            tid = jit.grid(1)
+            if tid < arr.size:
+                out[tid] = jit.popc(arr[tid])
+
+        x = cupy.array([0, 1, 3, 7, 15, 255, 0xFFFFFFFF], dtype=cupy.uint32)
+        y = cupy.zeros_like(x, dtype=cupy.int32)
+        f((1,), (x.size,), (x, y))
+        expected = cupy.array([0, 1, 2, 3, 4, 8, 32], dtype=cupy.int32)
+        assert (y == expected).all()
+
+    def test_ffs(self):
+        @jit.rawkernel()
+        def f(arr, out):
+            tid = jit.grid(1)
+            if tid < arr.size:
+                out[tid] = jit.ffs(arr[tid])
+
+        # ffs returns 1-based position, or 0 if no bits set
+        x = cupy.array([0, 1, 2, 3, 4, 8, 16, 0xFFFFFFFF], dtype=cupy.uint32)
+        y = cupy.zeros_like(x, dtype=cupy.int32)
+        f((1,), (x.size,), (x, y))
+        # 0->0, 1->1, 2->2, 3->1, 4->3, 8->4, 16->5, 0xFFFFFFFF->1
+        expected = cupy.array([0, 1, 2, 1, 3, 4, 5, 1], dtype=cupy.int32)
+        assert (y == expected).all()
+
+    def test_match_any_sync(self):
+        @jit.rawkernel()
+        def f(arr, values):
+            laneId = jit.laneid()
+            # Each thread has a value, find threads with matching value
+            value = values[laneId]
+            mask = jit.match_any_sync(0xffffffff, value)
+            arr[laneId] = mask
+
+        N = cupy._core._get_warpsize()
+        # Create pattern where threads 0-15 have value 1, threads 16-31 have value 2
+        values = cupy.ones((N,), dtype=cupy.int32)
+        values[N//2:] = 2
+        x = cupy.zeros((N,), dtype=cupy.uint32)
+        f((1,), (N,), (x, values))
+        # First half should match with first half, second half with second half
+        expected_mask_first = (1 << (N//2)) - 1
+        expected_mask_second = ((1 << N) - 1) ^ expected_mask_first
+        assert (x[:N//2] == expected_mask_first).all()
+        assert (x[N//2:] == expected_mask_second).all()
+
+    def test_match_all_sync(self):
+        @jit.rawkernel()
+        def f(arr, pred_out, values):
+            laneId = jit.laneid()
+            value = values[laneId]
+            mask, pred = jit.match_all_sync(0xffffffff, value)
+            arr[laneId] = mask
+            pred_out[laneId] = pred
+
+        N = cupy._core._get_warpsize()
+        # Test 1: All threads have the same value
+        values = cupy.ones((N,), dtype=cupy.int32)
+        x = cupy.zeros((N,), dtype=cupy.uint32)
+        pred_out = cupy.zeros((N,), dtype=cupy.int32)
+        f((1,), (N,), (x, pred_out, values))
+        # All threads should see full warp mask and pred=1
+        expected_mask = (1 << N) - 1 if N == 32 else 0xffffffffffffffff
+        assert (x == expected_mask).all()
+        assert (pred_out == 1).all()
+
+        # Test 2: Different values
+        values = cupy.arange(N, dtype=cupy.int32)
+        x = cupy.zeros((N,), dtype=cupy.uint32)
+        pred_out = cupy.zeros((N,), dtype=cupy.int32)
+        f((1,), (N,), (x, pred_out, values))
+        # Each thread sees only itself in the mask, pred=0
+        for i in range(N):
+            assert x[i] == (1 << i)
+        assert (pred_out == 0).all()
+
     @pytest.mark.xfail(reason="XXX: np2.0: int32/uint32 compile failure")
     def test_warpsize(self):
         @jit.rawkernel()
