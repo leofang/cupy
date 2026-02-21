@@ -559,6 +559,18 @@ class MatchAllSync(BuiltinFunc):
         """
         super().__call__()
 
+    def _get_preamble(self):
+        # Helper function to wrap __match_all_sync and return both values as a pair
+        preamble = """
+__device__ __forceinline__ STD::pair<unsigned int, int> 
+MatchAllSyncWrapper(unsigned int mask, int value) {
+    int pred;
+    unsigned int result_mask = __match_all_sync(mask, value, &pred);
+    return STD::make_pair(result_mask, pred);
+}
+"""
+        return preamble
+
     def call(self, env, mask, value):
         try:
             mask_val = mask.obj
@@ -572,17 +584,12 @@ class MatchAllSync(BuiltinFunc):
         value = _compile._astype_scalar(value, _cuda_types.int32, 'same_kind', env)
         value = Data.init(value, env)
         
-        # __match_all_sync returns the mask and sets pred to indicate if all match
-        # We need to generate code that captures both return values
-        pred_var = env.get_fresh_variable_name(prefix='_pred')
-        mask_var = env.get_fresh_variable_name(prefix='_mask')
-        
-        env.generated.add_code(f'int {pred_var};')
-        code = f'__match_all_sync({hex(mask_val)}, {value.code}, &{pred_var})'
+        # Add the helper function to the generated code
+        env.generated.add_code(self._get_preamble())
         
         # Return a tuple (mask, pred)
         ctype = _cuda_types.Tuple([_cuda_types.uint32, _cuda_types.int32])
-        return Data(f'STD::make_pair({code}, {pred_var})', ctype)
+        return Data(f'MatchAllSyncWrapper({hex(mask_val)}, {value.code})', ctype)
 
 
 builtin_functions_dict: Mapping[Any, BuiltinFunc] = {
