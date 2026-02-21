@@ -583,10 +583,10 @@ MatchAllSyncWrapper(unsigned int mask, int value) {
 
         value = _compile._astype_scalar(value, _cuda_types.int32, 'same_kind', env)
         value = Data.init(value, env)
-        
+
         # Add the helper function to the generated code
         env.generated.add_code(self._get_preamble())
-        
+
         # Return a tuple (mask, pred)
         ctype = _cuda_types.Tuple([_cuda_types.uint32, _cuda_types.int32])
         return Data(f'MatchAllSyncWrapper({hex(mask_val)}, {value.code})', ctype)
