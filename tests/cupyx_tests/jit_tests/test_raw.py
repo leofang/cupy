@@ -718,7 +718,7 @@ class TestRaw:
         x = cupy.zeros((N,), dtype=cupy.uint32)
         f((1,), (N,), (x,))
         # All threads should see the same full warp mask
-        expected_mask = (1 << N) - 1 if N == 32 else 0xffffffffffffffff
+        expected_mask = (1 << N) - 1
         assert (x == expected_mask).all()
 
     def test_popc(self):
@@ -786,7 +786,7 @@ class TestRaw:
         pred_out = cupy.zeros((N,), dtype=cupy.int32)
         f((1,), (N,), (x, pred_out, values))
         # All threads should see full warp mask and pred=1
-        expected_mask = (1 << N) - 1 if N == 32 else 0xffffffffffffffff
+        expected_mask = (1 << N) - 1
         assert (x == expected_mask).all()
         assert (pred_out == 1).all()
 
