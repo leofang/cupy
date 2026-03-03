@@ -655,6 +655,20 @@ cdef class _ndarray_base:
         """
         return _mdspan_from_ndarray(self, index_type, allow_unsafe)
 
+    def tile_arg(self):
+        """Returns a packed kernel argument view for cuTile kernels.
+
+        The returned buffer uses 8-byte (Word-sized) slots for all fields:
+        ``[void* data_ptr][int64 shape[0]]...[int64 stride[0]]...``
+
+        Strides are in element units (not bytes).
+
+        Returns:
+            tile_arg: A packed argument view that can be consumed directly
+            by cuTile's ``Vec<Word>`` without per-element conversion.
+        """
+        return _tile_arg_from_ndarray(self)
+
     # -------------------------------------------------------------------------
     # Array conversion
     # -------------------------------------------------------------------------
@@ -2321,6 +2335,12 @@ cdef inline _carray.mdspan _mdspan_from_ndarray(
         index_itemsize, allow_unsafe
     )
     return carr
+
+
+cdef inline _carray.tile_arg _tile_arg_from_ndarray(_ndarray_base arr):
+    cdef _carray.tile_arg ta = _carray.tile_arg.__new__(_carray.tile_arg)
+    ta.init(<void*>arr.data.ptr, arr.itemsize, arr._shape, arr._strides)
+    return ta
 
 
 cdef inline _carray.CArray _CArray_from_ndarray(_ndarray_base arr):

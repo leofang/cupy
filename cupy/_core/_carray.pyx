@@ -1,4 +1,4 @@
-from libc.string cimport memcpy
+from libc.string cimport memcpy, memset
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 
 from cupy.cuda cimport function
@@ -77,6 +77,58 @@ cdef class mdspan(function.CPointer):
                 raise
 
         assert offset == total_size
+
+    def __cinit__(self):
+        self.ptr = 0
+
+    def __dealloc__(self):
+        if self.ptr != 0:
+            PyMem_Free(<void*>(self.ptr))
+            self.ptr = 0
+
+
+cdef class tile_arg(function.CPointer):
+    """Packed kernel argument for cuTile with 8-byte (Word-sized) slots.
+
+    Buffer layout: [void* data_ptr : 8B]
+                   [int64 shape[0] : 8B] ... [int64 shape[ndim-1] : 8B]
+                   [int64 stride[0]: 8B] ... [int64 stride[ndim-1]: 8B]
+
+    Strides are in element units (not bytes).
+    """
+
+    cdef int init(
+            self, void* data_ptr, int itemsize,
+            const shape_t& shape, const strides_t& strides) except?-1:
+        cdef size_t ndim = shape.size()
+        assert ndim == strides.size()
+        assert ndim <= MAX_NDIM
+
+        cdef size_t word_size = sizeof(long long)
+        cdef size_t total_size = (1 + ndim * 2) * word_size
+        cdef void* data = PyMem_Malloc(total_size)
+        if data == NULL:
+            raise MemoryError
+        memset(data, 0, total_size)
+        self.ptr = <intptr_t>data
+
+        cdef size_t offset = 0
+        (<void**>(<char*>(data) + offset))[0] = data_ptr
+        offset += word_size
+
+        cdef int i
+        for i in range(ndim):
+            (<int*>(<char*>(data) + offset))[0] = <int>shape[i]
+            offset += word_size
+
+        for i in range(ndim):
+            (<int*>(<char*>(data) + offset))[0] = (
+                <int>(strides[i] // itemsize)
+            )
+            offset += word_size
+
+        assert offset == total_size
+        return 0
 
     def __cinit__(self):
         self.ptr = 0
