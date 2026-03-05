@@ -164,8 +164,18 @@ cpdef int runtimeGetVersion() except? -1:
     """
 
     cdef int version
+    cdef int nvrtc_major, nvrtc_minor
     status = cudaRuntimeGetVersion(&version)
     check_status(status)
+    # Starting with CUDA 13, cudaRuntimeGetVersion() only returns major * 1000
+    # without the minor version (minor * 10). Use NVRTC to obtain the correct
+    # minor version. The import is done lazily to avoid circular import issues.
+    if (not hip_environment and version >= 13000
+            and version == (version // 1000) * 1000):
+        from cupy_backends.cuda.libs import nvrtc as _nvrtc
+        nvrtc_major, nvrtc_minor = _nvrtc.getVersion()
+        if nvrtc_major == version // 1000:
+            version = nvrtc_major * 1000 + nvrtc_minor * 10
     return version
 
 
@@ -178,9 +188,19 @@ cpdef int _getCUDAMajorVersion() except? -1:
 
 cpdef int _getLocalRuntimeVersion() except? -1:
     cdef int version
+    cdef int nvrtc_major, nvrtc_minor
     initialize()
     status = DYN_cudaRuntimeGetVersion(&version)
     check_status(status)
+    # Starting with CUDA 13, cudaRuntimeGetVersion() only returns major * 1000
+    # without the minor version (minor * 10). Use NVRTC to obtain the correct
+    # minor version. The import is done lazily to avoid circular import issues.
+    if (not hip_environment and version >= 13000
+            and version == (version // 1000) * 1000):
+        from cupy_backends.cuda.libs import nvrtc as _nvrtc
+        nvrtc_major, nvrtc_minor = _nvrtc.getVersion()
+        if nvrtc_major == version // 1000:
+            version = nvrtc_major * 1000 + nvrtc_minor * 10
     return version
 
 
