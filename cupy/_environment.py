@@ -263,6 +263,38 @@ def _setup_win32_dll_directory():
         config = get_preload_config()
         is_conda = (config is not None and (config['packaging'] == 'conda'))
 
+        if (3, 8) <= sys.version_info and not is_conda:
+            # Register CUDA's bin directory in the DLL search path BEFORE
+            # calling get_cuda_path(), which may load NVRTC via pathfinder.
+            # On Windows, NVRTC has a DLL dependency on cudart64_NN.dll; if
+            # the DLL search path has not been configured yet, Windows will
+            # fall back to System32, where an older CUDA runtime (e.g. 13.0)
+            # may be installed, causing a version mismatch with the toolkit
+            # (e.g. 13.1) that was used to build CuPy.
+            #
+            # Priority 1: honour the CUDA_PATH environment variable that is
+            # explicitly set (e.g. by the CI's ActivateCUDA helper).
+            _cuda_path_env = os.environ.get('CUDA_PATH', '')
+            if os.path.isdir(_cuda_path_env):
+                _early_bin = os.path.join(_cuda_path_env, 'bin')
+                if os.path.isdir(_early_bin):
+                    _log('Adding DLL search path (early, from CUDA_PATH): '
+                         '{}'.format(_early_bin))
+                    os.add_dll_directory(_early_bin)
+                    _early_bin_x64 = os.path.join(_early_bin, 'x64')
+                    if os.path.isdir(_early_bin_x64):
+                        _log('Adding DLL search path (early, from CUDA_PATH):'
+                             ' {}'.format(_early_bin_x64))
+                        os.add_dll_directory(_early_bin_x64)
+            else:
+                # Priority 2: derive the bin directory from nvcc on PATH.
+                _nvcc = shutil.which('nvcc')
+                if _nvcc is not None:
+                    _early_bin = os.path.dirname(_nvcc)
+                    _log('Adding DLL search path (early, from nvcc): '
+                         '{}'.format(_early_bin))
+                    os.add_dll_directory(_early_bin)
+
         # Path to the CUDA Toolkit binaries
         cuda_path = get_cuda_path()
         if cuda_path is not None:
