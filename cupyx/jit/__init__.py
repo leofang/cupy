@@ -28,6 +28,11 @@ from cupyx.jit._builtin_funcs import shfl_sync  # NOQA
 from cupyx.jit._builtin_funcs import shfl_up_sync  # NOQA
 from cupyx.jit._builtin_funcs import shfl_down_sync  # NOQA
 from cupyx.jit._builtin_funcs import shfl_xor_sync  # NOQA
+from cupyx.jit._builtin_funcs import activemask  # NOQA
+from cupyx.jit._builtin_funcs import popc  # NOQA
+from cupyx.jit._builtin_funcs import ffs  # NOQA
+from cupyx.jit._builtin_funcs import match_any_sync  # NOQA
+from cupyx.jit._builtin_funcs import match_all_sync  # NOQA
 
 from cupyx.jit import cg  # NOQA
 from cupyx.jit import cub  # NOQA

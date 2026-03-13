@@ -440,6 +440,158 @@ class LaneID(BuiltinFunc):
         return Data('LaneId()', _cuda_types.uint32)
 
 
+class ActiveMask(BuiltinFunc):
+    def __call__(self):
+        """Returns a 32-bit integer mask indicating which threads in the
+        warp are currently active.
+
+        .. seealso:: `Warp Vote Functions`_
+
+        .. _Warp Vote Functions:
+            https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#warp-vote-functions
+        """
+        super().__call__()
+
+    def call_const(self, env):
+        return Data('__activemask()', _cuda_types.uint32)
+
+
+class Popc(BuiltinFunc):
+    def __call__(self, x):
+        """Count the number of bits that are set to 1 in a 32-bit integer.
+
+        Args:
+            x (int): Integer value to count bits in.
+
+        Returns:
+            int: Number of non-zero bits in ``x``.
+
+        .. seealso:: `Integer Intrinsics`_
+
+        .. _Integer Intrinsics:
+            https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#integer-intrinsics
+        """
+        super().__call__()
+
+    def call(self, env, x):
+        x = _compile._astype_scalar(x, _cuda_types.uint32, 'same_kind', env)
+        x = Data.init(x, env)
+        return Data(f'__popc({x.code})', _cuda_types.int32)
+
+
+class Ffs(BuiltinFunc):
+    def __call__(self, x):
+        """Find the position of the first (least significant) bit set to 1
+        in a 32-bit integer.
+
+        Args:
+            x (int): Integer value to search.
+
+        Returns:
+            int: Position of the first set bit (1-based), or 0 if no bits are set.
+
+        .. seealso:: `Integer Intrinsics`_
+
+        .. _Integer Intrinsics:
+            https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#integer-intrinsics
+        """
+        super().__call__()
+
+    def call(self, env, x):
+        x = _compile._astype_scalar(x, _cuda_types.uint32, 'same_kind', env)
+        x = Data.init(x, env)
+        return Data(f'__ffs({x.code})', _cuda_types.int32)
+
+
+class MatchAnySync(BuiltinFunc):
+    def __call__(self, mask, value):
+        """Returns a mask of threads in the warp that have the same value
+        for ``value`` as the calling thread.
+
+        Args:
+            mask (int): Mask indicating which threads participate in the call.
+            value (int): Value to compare across threads.
+
+        Returns:
+            int: Mask of threads with matching values.
+
+        .. seealso:: `Warp Match Functions`_
+
+        .. _Warp Match Functions:
+            https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#warp-match-functions
+        """
+        super().__call__()
+
+    def call(self, env, mask, value):
+        try:
+            mask_val = mask.obj
+        except Exception:
+            raise TypeError('mask must be an integer')
+        if runtime.is_hip:
+            warnings.warn(f'mask {mask_val} is ignored on HIP', RuntimeWarning)
+        elif not (0x0 <= mask_val <= 0xffffffff):
+            raise ValueError('mask is out of range')
+
+        value = _compile._astype_scalar(value, _cuda_types.int32, 'same_kind', env)
+        value = Data.init(value, env)
+        return Data(f'__match_any_sync({hex(mask_val)}, {value.code})', _cuda_types.uint32)
+
+
+class MatchAllSync(BuiltinFunc):
+    def __call__(self, mask, value):
+        """Evaluates a predicate for all threads in the warp and returns
+        a mask indicating which threads have the same value, along with
+        a boolean indicating if all threads have the same value.
+
+        Args:
+            mask (int): Mask indicating which threads participate in the call.
+            value (int): Value to compare across threads.
+
+        Returns:
+            tuple: A pair ``(mask, pred)`` where ``mask`` is the mask of threads
+                with matching values and ``pred`` is 1 if all participating threads
+                have the same value, 0 otherwise.
+
+        .. seealso:: `Warp Match Functions`_
+
+        .. _Warp Match Functions:
+            https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#warp-match-functions
+        """
+        super().__call__()
+
+    def _get_preamble(self):
+        # Helper function to wrap __match_all_sync and return both values as a pair
+        preamble = """
+__device__ __forceinline__ STD::pair<unsigned int, int> 
+MatchAllSyncWrapper(unsigned int mask, int value) {
+    int pred;
+    unsigned int result_mask = __match_all_sync(mask, value, &pred);
+    return STD::make_pair(result_mask, pred);
+}
+"""
+        return preamble
+
+    def call(self, env, mask, value):
+        try:
+            mask_val = mask.obj
+        except Exception:
+            raise TypeError('mask must be an integer')
+        if runtime.is_hip:
+            warnings.warn(f'mask {mask_val} is ignored on HIP', RuntimeWarning)
+        elif not (0x0 <= mask_val <= 0xffffffff):
+            raise ValueError('mask is out of range')
+
+        value = _compile._astype_scalar(value, _cuda_types.int32, 'same_kind', env)
+        value = Data.init(value, env)
+
+        # Add the helper function to the generated code
+        env.generated.add_code(self._get_preamble())
+
+        # Return a tuple (mask, pred)
+        ctype = _cuda_types.Tuple([_cuda_types.uint32, _cuda_types.int32])
+        return Data(f'MatchAllSyncWrapper({hex(mask_val)}, {value.code})', ctype)
+
+
 builtin_functions_dict: Mapping[Any, BuiltinFunc] = {
     range: RangeFunc(),
     len: LenFunc(),
@@ -491,3 +643,10 @@ shfl_sync = WarpShuffleOp('', _shfl_dtypes)
 shfl_up_sync = WarpShuffleOp('up', _shfl_dtypes)
 shfl_down_sync = WarpShuffleOp('down', _shfl_dtypes)
 shfl_xor_sync = WarpShuffleOp('xor', _shfl_dtypes)
+
+# warp-mask helper functions
+activemask = ActiveMask()
+popc = Popc()
+ffs = Ffs()
+match_any_sync = MatchAnySync()
+match_all_sync = MatchAllSync()
