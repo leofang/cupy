@@ -59,9 +59,18 @@ from cupy_backends.cuda cimport stream as _stream_module
 from cupy_backends.cuda.api cimport runtime
 from cupy_backends.cuda.libs cimport nvrtc
 
+from libc.string cimport memcpy
+from cuda.bindings cimport cydriver
+
 from cupy.exceptions import ComplexWarning
 
 NUMPY_1x = numpy.__version__ < '2'
+
+
+cdef extern from "numpy/arrayobject.h":
+    # NumPy 2.0+: write `value` as one item of dtype `descr` at `item`.
+    int PyArray_Pack(cnp.dtype descr, void* item, object value) except -1
+    object PyArray_Scalar(void* data, cnp.dtype descr, cpython.PyObject* base)
 
 
 cdef extern from *:
@@ -209,6 +218,59 @@ class ndarray(_ndarray_base):
 
         """
         return super(ndarray, self).view(dtype=dtype, array_class=type)
+
+
+cdef inline int _fill_width(
+        const unsigned char* p, Py_ssize_t n) noexcept nogil:
+    # Smallest w in (1, 2, 4) such that the n bytes at p repeat with period w,
+    # i.e. cuMemsetD{8,16,32} can write the value. 0 if there is none.
+    cdef Py_ssize_t i, w = 1
+    while w <= 4:
+        if n % w == 0:
+            i = w
+            while i < n and p[i] == p[i - w]:
+                i += 1
+            if i == n:
+                return <int>w
+        w *= 2
+    return 0
+
+
+cdef inline bint _can_memset(_ndarray_base a, int width) except -1:
+    # cuMemsetD16/D32 need an aligned pointer. Memory on another device goes
+    # through the kernel path, which turns on peer access.
+    return (width != 0 and a.data.ptr % width == 0
+            and a.data.device_id == device.get_device_id())
+
+
+cdef int _memset_pattern(
+        intptr_t ptr, const unsigned char* p, int width, size_t nbytes
+) except -1:
+    cdef unsigned short us
+    cdef unsigned int ui
+    cdef unsigned char uc
+    cdef cydriver.CUresult status
+    cdef cydriver.CUdeviceptr dst = <cydriver.CUdeviceptr>ptr
+    cdef cydriver.CUstream s
+    # The driver API needs the context current on this thread.
+    runtime._ensure_context()
+    s = <cydriver.CUstream>stream_module.get_current_stream_ptr()
+    if width == 1:
+        uc = p[0]
+        with nogil:
+            status = cydriver.cuMemsetD8Async(dst, uc, nbytes, s)
+    elif width == 2:
+        memcpy(&us, p, 2)
+        with nogil:
+            status = cydriver.cuMemsetD16Async(dst, us, nbytes // 2, s)
+    else:
+        memcpy(&ui, p, 4)
+        with nogil:
+            status = cydriver.cuMemsetD32Async(dst, ui, nbytes // 4, s)
+    if status != 0:
+        from cupy_backends.cuda.api import driver
+        driver.check_status(status)
+    return 0
 
 
 cdef class _ndarray_base:
@@ -1008,26 +1070,70 @@ cdef class _ndarray_base:
         .. seealso:: :meth:`numpy.ndarray.fill`
 
         """
+        cdef cnp.ndarray arr
+        cdef cnp.dtype descr
+        cdef cnp.npy_uint64 buf[2]
+        cdef const unsigned char* p
+        cdef Py_ssize_t itemsize
+        cdef intptr_t ptr
+        cdef int width
+
+        # Fast path: plain Python/NumPy scalars and 0-d NumPy arrays cannot be
+        # CuPy-like, and PyArray_Pack converts them straight into a stack
+        # buffer (it is what numpy.asarray(scalar, dtype=...) does inside).
+        if (cpython.PyFloat_CheckExact(value)
+                or cpython.PyLong_CheckExact(value)
+                or cpython.PyBool_Check(value)
+                or cpython.PyComplex_CheckExact(value)
+                or isinstance(value, cnp.generic)
+                or (cnp.PyArray_CheckExact(value)
+                    and cnp.PyArray_NDIM(<cnp.ndarray>value) == 0)):
+            descr = <cnp.dtype>self.dtype
+            itemsize = descr.itemsize
+            if itemsize <= 16 and descr.kind != b'V':
+                PyArray_Pack(descr, buf, value)
+                p = <const unsigned char*>buf
+                if self._c_contiguous:
+                    width = _fill_width(p, itemsize)
+                    ptr = self.data.ptr
+                    if _can_memset(self, width):
+                        if self.size > 0:
+                            _memset_pattern(
+                                ptr, p, width, self.size * itemsize)
+                        return
+                fill_kernel(PyArray_Scalar(buf, descr, NULL), self)
+                return
+
         cupy_arr = _convert_from_cupy_like(value, error=False)
         if cupy_arr is not None:
             if cupy_arr.shape != ():
                 raise ValueError(
                     'non-scalar cupy.ndarray cannot be used for fill')
             value = cupy_arr.astype(self.dtype, copy=False)
-        else:
-            value = numpy.asarray(value, dtype=self.dtype)
-            if value.shape != ():
-                raise ValueError(
-                    'non-scalar numpy.ndarray cannot be used for fill')
-            value = value[()]  # use scalar rather than NumPy array
+            if (self._c_contiguous
+                    and value.tobytes() == bytes(self.dtype.itemsize)):
+                self.data.memset_async(0, self.nbytes)
+            else:
+                fill_kernel(value, self)
+            return
 
-        if ((<cnp.dtype>(self.dtype)).type_num != cnp.NPY_VOID
-                and value == 0 and self._c_contiguous):
-            # For most types, we can just memset if the value is zero.
-            # (Void also works mostly, but the `value == 0` could fail.)
-            self.data.memset_async(0, self.nbytes)
-        else:
-            fill_kernel(value, self)
+        arr = numpy.asarray(value, dtype=self.dtype)
+        if cnp.PyArray_NDIM(arr) != 0:
+            raise ValueError(
+                'non-scalar numpy.ndarray cannot be used for fill')
+        if self._c_contiguous:
+            # Any value whose bytes repeat every 1, 2 or 4 bytes (all 1-, 2-
+            # and 4-byte dtypes, and e.g. +0.0 for wider ones) is one driver
+            # memset; comparing bytes keeps -0.0 distinct from +0.0.
+            p = <const unsigned char*>cnp.PyArray_DATA(arr)
+            itemsize = cnp.PyArray_ITEMSIZE(arr)
+            width = _fill_width(p, itemsize)
+            ptr = self.data.ptr
+            if _can_memset(self, width):
+                if self.size > 0:
+                    _memset_pattern(ptr, p, width, self.size * itemsize)
+                return
+        fill_kernel(arr[()], self)  # use scalar rather than NumPy array
 
     # -------------------------------------------------------------------------
     # Shape manipulation
