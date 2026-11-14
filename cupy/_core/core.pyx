@@ -67,6 +67,12 @@ from cupy.exceptions import ComplexWarning
 NUMPY_1x = numpy.__version__ < '2'
 
 
+cdef extern from "numpy/arrayobject.h":
+    # NumPy 2.0+: write `value` as one item of dtype `descr` at `item`.
+    int PyArray_Pack(cnp.dtype descr, void* item, object value) except -1
+    object PyArray_Scalar(void* data, cnp.dtype descr, cpython.PyObject* base)
+
+
 cdef extern from *:
     """
     #define _str_(s) #s
@@ -1065,10 +1071,39 @@ cdef class _ndarray_base:
 
         """
         cdef cnp.ndarray arr
+        cdef cnp.dtype descr
+        cdef cnp.npy_uint64 buf[2]
         cdef const unsigned char* p
         cdef Py_ssize_t itemsize
         cdef intptr_t ptr
         cdef int width
+
+        # Fast path: plain Python/NumPy scalars and 0-d NumPy arrays cannot be
+        # CuPy-like, and PyArray_Pack converts them straight into a stack
+        # buffer (it is what numpy.asarray(scalar, dtype=...) does inside).
+        if (cpython.PyFloat_CheckExact(value)
+                or cpython.PyLong_CheckExact(value)
+                or cpython.PyBool_Check(value)
+                or cpython.PyComplex_CheckExact(value)
+                or isinstance(value, cnp.generic)
+                or (cnp.PyArray_CheckExact(value)
+                    and cnp.PyArray_NDIM(<cnp.ndarray>value) == 0)):
+            descr = <cnp.dtype>self.dtype
+            itemsize = descr.itemsize
+            if itemsize <= 16 and descr.kind != b'V':
+                PyArray_Pack(descr, buf, value)
+                p = <const unsigned char*>buf
+                if self._c_contiguous:
+                    width = _fill_width(p, itemsize)
+                    ptr = self.data.ptr
+                    if _can_memset(self, width):
+                        if self.size > 0:
+                            _memset_pattern(
+                                ptr, p, width, self.size * itemsize)
+                        return
+                fill_kernel(PyArray_Scalar(buf, descr, NULL), self)
+                return
+
         cupy_arr = _convert_from_cupy_like(value, error=False)
         if cupy_arr is not None:
             if cupy_arr.shape != ():
